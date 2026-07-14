@@ -30,8 +30,8 @@
       dimension der(3)
       rref=1.4d0
       rasi=100.d0
-!     id=0
-      call  VH3(rasi,rasi,rref,pot,der)
+      id=0
+      call  VH3(rasi,rasi,rref,pot,der,id)
       vref=pot
 
       r3=r1*r1+r2*r2-2.d0*r1*r2*costet
@@ -44,8 +44,8 @@
       if(r1.lt.0.25d0)r1=0.25d0
       if(r2.lt.0.25d0)r2=0.25d0
       if(r3.lt.0.25d0)r3=0.25d0
-!     id=0
-      call VH3(r3,r2,r1,pot,der)
+      id=0
+      call VH3(r3,r2,r1,pot,der,id)
       potmat(1,1)=pot-vref
 
       return

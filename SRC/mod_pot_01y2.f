@@ -545,10 +545,10 @@
       do ie=1,nelec
       do je=ie,nelec
          if(idproc.eq.0.and.npun1.gt.1)then
-            write(name,"('potr1r2.e',i2.2,'.'i2.2)")ie,je
+            write(name,"('potr1r2.e',i2.2,'.',i2.2)")ie,je
             open(ifile,file=name,status='unknown')
          elseif(idproc.eq.0.and.npun1.eq.1)then
-            write(name,"('potr2gam.e',i2.2,'.'i2.2)")ie,je
+            write(name,"('potr2gam.e',i2.2,'.',i2.2)")ie,je
             open(ifile,file=name,status='unknown')
          endif
 
