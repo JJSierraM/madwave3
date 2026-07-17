@@ -27,7 +27,7 @@ c! the partition.
       call MPI_COMM_RANK(MPI_COMM_WORLD, idproc, ierr)
       call MPI_COMM_SIZE(MPI_COMM_WORLD, nproc, ierr)
 
-      write(filename,'("salpot."i3.3)')idproc
+      write(filename,'("salpot.",i3.3)')idproc
       open(6,file=filename,status='unknown')
       write(6,'(40("="),//)')
       write(6,'(10x,"Potini for Madwave3 version 6 ",//)')
