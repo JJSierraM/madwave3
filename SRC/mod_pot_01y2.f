@@ -217,16 +217,6 @@
                enddo
                enddo
 
-               do ielec=1,nelecmax
-                  if(vmat(ielec,ielec).gt.vcutmax)then
-                     do jelec=1,nelec
-                        vmat(ielec,jelec)=0.d0
-                        vmat(jelec,ielec)=0.d0
-                     enddo
-                     vmat(ielec,ielec)=vcutmax
-                  endif
-               enddo
-              
             
                if(nelecmax.eq.1)then
                   Tpot(1,1)=1.d0
