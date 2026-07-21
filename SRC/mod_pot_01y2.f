@@ -150,6 +150,7 @@
       implicit none
       include "mpif.h"
       
+      real*8 :: x1max, x2max, angmax
       real*8 :: vmin,x1min,x2min,angmin,ctet,r1,r2,rpeq,Rg
       integer :: ie,ir1,ir2,iang,maxpoint,ielec,jelec,icount,maxpointang
       integer :: je,ke,nsend,ierror,icorte,ieleccut
@@ -231,8 +232,6 @@
                icorte=0
                do ielec=1,nelecmax
                   if(eigenpot(ielec).gt.vcutmax)icorte=icorte+1
-                  if(eigenpot(ielec).gt.vmaxtot)vmaxtot=eigenpot(ielec)
-                  
                enddo
 
                   
@@ -256,6 +255,12 @@
                       x1min=r1
                       x2min=r2
                       angmin=dacos(cgamma(iang))*180.d0/pi
+                  endif
+                  if(icount.gt.0 .and. eigenpot(ielec).gt.vmaxtot)then
+                      vmaxtot=eigenpot(ielec)
+                      x1max=r1
+                      x2max=r2
+                      angmax=dacos(cgamma(iang))*180.d0/pi
                   endif
                enddo
                
