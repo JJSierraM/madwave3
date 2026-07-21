@@ -158,6 +158,7 @@
       real*8 :: vmat(nelecmax,nelecmax),potmat(nelecmax,nelecmax)
       real*8 :: vdiagon(nelecmax,nelecmax)
       real*8 :: Tpot(nelecmax,nelecmax),eigenpot(nelecmax)
+      real*8 :: vcutmax3, delta_e, ethres
 
       vmaxtot=vcutmax
       npunreal(:)=0
@@ -228,6 +229,26 @@
                   vdiagon=vmat
                   call DIAGON(vdiagon,nelecmax,nelecmax,Tpot,EIGENpot)
                endif
+
+               ethres = 3 * vcutmax
+               delta_e = 0.05
+               do ie = 1, nelecmax
+                   if (EIGENpot(ie) > ethres) then
+                      EIGENpot(ie) = ethres + delta_e *
+     &          dtanh((EIGENpot(ie) - ethres) / delta_e)
+                   end if
+               end do
+
+               ! Reconstruct vmat
+               vmat(:,:) = 0.d0
+               do je = 1, nelecmax
+                  do ie = 1, nelecmax
+                     do ke = 1, nelecmax
+                        vmat(ie,je) = vmat(ie,je) +
+     &           Tpot(ie,ke) * EIGENpot(ke) * Tpot(je,ke)
+                     end do
+                  end do
+               end do
 
                icorte=0
                do ielec=1,nelecmax
