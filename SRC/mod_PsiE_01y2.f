@@ -252,7 +252,7 @@
             
             
             if(idproc.eq.0)then
-               write(name,'("fer1r2",i2.2,".elec",i2.2,".iom",i2.2)')
+               write(name,'("fer1r2.",i2.2,".elec",i2.2,".iom",i2.2)')
      &                            ife,jelec,jom
                open(10,file=name,status='unknown')
                do ir1=1,npun1,n1plot
