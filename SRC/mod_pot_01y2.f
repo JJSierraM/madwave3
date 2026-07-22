@@ -150,6 +150,7 @@
       implicit none
       include "mpif.h"
       
+      real*8 :: x1max, x2max, angmax
       real*8 :: vmin,x1min,x2min,angmin,ctet,r1,r2,rpeq,Rg
       integer :: ie,ir1,ir2,iang,maxpoint,ielec,jelec,icount,maxpointang
       integer :: je,ke,nsend,ierror,icorte,ieleccut
@@ -157,6 +158,7 @@
       real*8 :: vmat(nelecmax,nelecmax),potmat(nelecmax,nelecmax)
       real*8 :: vdiagon(nelecmax,nelecmax)
       real*8 :: Tpot(nelecmax,nelecmax),eigenpot(nelecmax)
+      real*8 :: vcutmax3, delta_e, ethres
 
       vmaxtot=vcutmax
       npunreal(:)=0
@@ -226,13 +228,31 @@
                   eigenpot(:)=0.d0
                   vdiagon=vmat
                   call DIAGON(vdiagon,nelecmax,nelecmax,Tpot,EIGENpot)
+
+                  ethres = 3 * vcutmax
+                  delta_e = 0.05
+                  do ie = 1, nelecmax
+                      if (EIGENpot(ie) > ethres) then
+                         EIGENpot(ie) = ethres + delta_e *
+     &             dtanh((EIGENpot(ie) - ethres) / delta_e)
+                      end if
+                  end do
+
+                  ! Reconstruct vmat
+                  vmat(:,:) = 0.d0
+                  do je = 1, nelecmax
+                     do ie = 1, nelecmax
+                        do ke = 1, nelecmax
+                           vmat(ie,je) = vmat(ie,je) +
+     &              Tpot(ie,ke) * EIGENpot(ke) * Tpot(je,ke)
+                        end do
+                     end do
+                  end do
                endif
 
                icorte=0
                do ielec=1,nelecmax
                   if(eigenpot(ielec).gt.vcutmax)icorte=icorte+1
-                  if(eigenpot(ielec).gt.vmaxtot)vmaxtot=eigenpot(ielec)
-                  
                enddo
 
                   
@@ -256,6 +276,12 @@
                       x1min=r1
                       x2min=r2
                       angmin=dacos(cgamma(iang))*180.d0/pi
+                  endif
+                  if(icount.gt.0 .and. eigenpot(ielec).gt.vmaxtot)then
+                      vmaxtot=eigenpot(ielec)
+                      x1max=r1
+                      x2max=r2
+                      angmax=dacos(cgamma(iang))*180.d0/pi
                   endif
                enddo
                
