@@ -1,19 +1,19 @@
-************************  dwigner  **************************************
+! ************************  dwigner  **************************************
 
       subroutine dwigner(dj,jmax2,m2,mp2,beta,ndim)
       implicit real*8(a-h,o-z)
 
-*     ***********************************************
-*     *   Wigner matrizes: d^J_{M,M'} (cos(beta))   *
-*     *       kept in dj(2*J) to consider           *
-*     *         halfinteger values of J             *
-*     *  input:                                     *
-*     *     jmax2 is 2 * jmax, jmax being           *
-*     *                   the highest  j required   *
-*     *     m2 and mp2: are (m * 2) and (mp *2)     *
-*     *                   respectively              *
-*     *     beta: angle defined between 0 and Pi    *
-*     ***********************************************
+! *     ***********************************************
+! *     *   Wigner matrizes: d^J_{M,M'} (cos(beta))   *
+! *     *       kept in dj(2*J) to consider           *
+! *     *         halfinteger values of J             *
+! *     *  input:                                     *
+! *     *     jmax2 is 2 * jmax, jmax being           *
+! *     *                   the highest  j required   *
+! *     *     m2 and mp2: are (m * 2) and (mp *2)     *
+! *     *                   respectively              *
+! *     *     beta: angle defined between 0 and Pi    *
+! *     ***********************************************
 
       dimension dj(0:ndim)
 
@@ -31,8 +31,8 @@
 
       y=dcos(beta)
 
-***> jmin=0 ---> M=M'=0 ---> d^J_{M,Mp} = P_J(cos(beta))
-********************************************************
+! ***> jmin=0 ---> M=M'=0 ---> d^J_{M,Mp} = P_J(cos(beta))
+! ********************************************************
 
       if(jmin2.eq.0)then
          dj(jmin2)=1.d0
@@ -46,8 +46,8 @@
          enddo
       elseif(jmin2.gt.0)then
 
-***> d^J_{M,M'} for J=jmin=max0(iabs(M),iabs(M')) > 0
-*a)      Normalization factor
+! ***> d^J_{M,M'} for J=jmin=max0(iabs(M),iabs(M')) > 0
+! *a)      Normalization factor
 
          facnum=0.d0
          do i=1,jmin2
@@ -76,7 +76,7 @@
 
          fact=dexp(0.5d0*(facnum-facden1-facden2))
 
-*b) 
+! *b) 
          sign=1.d0
          xsin=dsin(beta*0.5d0)
          xcos=dcos(beta*0.5d0)
@@ -111,12 +111,12 @@
             endif
          endif
 
-*c)
+! *c)
 
          dj(jmin2)=fact*sign*a*b
 
 
-***> d^J_{M,M'} for J=jmin+1
+! ***> d^J_{M,M'} for J=jmin+1
 
          xj=dble(jmin2)*0.5d0
          xjp=xj+1.d0
@@ -136,7 +136,7 @@
          if(indp.le.jmax2)then
          dj(indp)=factot*facj*dj(ind)
 
-***> d^J_{M,M'} for J>jmin+1
+! ***> d^J_{M,M'} for J>jmin+1
 
          do indp=jmin2+4,jmax2,2
             ind=indp-2
@@ -163,52 +163,49 @@
 
 
       endif
-****************************************
+! ****************************************
 
       endif
 
       return
       end
-*************************** gauleg **************************
+! *************************** gauleg **************************
 
-      SUBROUTINE GAULEG(W,XX,n)
-      IMPLICIT real*8 (A-H,O-Z)
 
-      dimension W(n),XX(n)
+subroutine gauleg(x, w, n)
+   implicit none
+   integer, intent(in) :: n
+   real*8 :: x1 = -1.0, x2 = 1.0
+   real*8, dimension(n), intent(out) :: x, w
+   integer :: i, j, m
+   real*8 :: p1, p2, p3, pp, xl, xm, z, z1
+   real*8, parameter :: eps=3.d-14
 
-      x1=-1.d0
-      x2=1.d0
-
-      YN=DFLOAT(N)
-      EPS=1.D-15
-      M=(N+1)/2
-      XM=0.5D0*(X1+X2)
-      XL=0.5D0*(X2-X1)
-      PI=DACOS(-1.D0)
-      DO 12 I=1,M
-      YI=DFLOAT(I)
-      Z=DCOS(PI*(YI-0.25D0)/(YN+0.5D0))
- 1    CONTINUE
-      P1=1.D0
-      P2=0.D0
-      DO 11 J=1,N
-      P3=P2
-      P2=P1
-      YJ=DFLOAT(J)
-      P1=((2.D0*YJ-1.D0)*Z*P2-(YJ-1.D0)*P3)/YJ
-11    CONTINUE
-      PP=YN*(Z*P1-P2)/(Z*Z-1.D0)
-      Z1=Z
-      Z=Z1-P1/PP
-      IF(DABS(Z-Z1).GT.EPS)GO TO 1
-      XX(I)=XM-XL*Z
-      XX(N+1-I)=XM+XL*Z
-      W(I)=2.D0*XL/((1.D0-Z*Z)*PP*PP)
-      W(N+1-I)=W(I)
-12    CONTINUE
-
-      RETURN
-      END
+   m = (n+1)/2
+   xm = 0.5d0 * (x2+x1)
+   xl = 0.5d0 * (x2-x1)
+   
+   do i=1,m
+      z = cos(3.141592654d0 * (i - 0.25d0) / (n + 0.5d0))
+      z1 = 0.0
+      do while(abs(z-z1) > eps)
+         p1 = 1.0d0
+         p2 = 0.0d0
+         do j=1,n
+            p3 = p2
+            p2 = p1
+            p1 = ((2.0d0*j-1.0d0)*z*p2-(j-1.0d0)*p3)/j
+         end do
+         pp = n*(z*p1-p2)/(z*z-1.0d0)
+         z1 = z
+         z = z1 - p1/pp
+      end do
+      x(i) = xm - xl*z
+      x(n+1-i) = xm + xl*z
+      w(i) = (2.0d0*xl)/((1.0d0-z*z)*pp*pp)
+      w(n+1-i) = w(i)
+   end do
+end subroutine gauleg
 
 ********************  FACTORIAL  *********************************
 
