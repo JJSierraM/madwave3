@@ -12,16 +12,16 @@
       use mod_baseYfunciones_01y2
       use mod_photoini_01y2
       use mod_Hphi_01y2
+      use mpi
       
       implicit none
       character*40 filename
       integer ierr,ielec
 
-      include "mpif.h"
 
       
-c! Initialize MPI environment and get proc's ID and number of proc in
-c! the partition.
+      ! Initialize MPI environment and get proc's ID and number of proc in
+      ! the partition.
 
       call MPI_INIT(ierr)
       call MPI_COMM_RANK(MPI_COMM_WORLD, idproc, ierr)
@@ -29,29 +29,26 @@ c! the partition.
 
       write(filename,'("salpot.",i3.3)')idproc
       open(6,file=filename,status='unknown')
-      write(6,'(40("="),//)')
-      write(6,'(10x,"Potini for Madwave3 version 6 ",//)')
-      write(6,*)' output of proc. idproc= ',idproc,' of nproc= ',nproc
-      write(6,'(/,40("="),//)')
+      print '(40("="),//)'
+      print '(10x,"Potini for Madwave3 version 6 ",//)'
+      print *, ' output of proc. idproc= ',idproc,' of nproc= ',nproc
+      print '(/,40("="),//)'
       
 !     initialization of data
 
+      call input_grid()
+      call pot0()
+      call paralelizacion()
+      print *, 
+      print *, '  --- Initialization of the potential ---'
+      print *, 
 
-      call input_grid
-      call pot0
-      call  paralelizacion
-      write(6,*)
-      write(6,*)'  --- Initialization of the potential ---'
-      write(6,*)
-
-      nelec=nelecmax
-      call setxbcpotele(iomdiat,iomatom,sigdiat,sigatom
-     &                     ,nelec,nelecmax)
-      write(6,*)
-      write(6,*)'  --- end initialization of the potential ---'
-      write(6,*)
+      call setxbcpotele(iomdiat,iomatom,sigdiat,sigatom,nelec,nelecmax)
+      print *, 
+      print *, '  --- end initialization of the potential ---'
+      print *, 
       if(nelec.gt.nelecmax.or.nelec.eq.0)then
-          write(6,*)'  !!! nelec= ',nelec
+          print *,'  !!! nelec= ',nelec
      &                            ,'  while nelecmax= ',nelecmax
           call flush(6)
           stop

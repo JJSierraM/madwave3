@@ -1,4 +1,4 @@
-      module mod_baseYfunciones_01y2
+      module mod_baseYfunciones_Renner_01y2
       use mod_gridYpara_01y2
       use mod_pot_01y2
       implicit none 
@@ -1317,4 +1317,4 @@ c            endif
       end subroutine product_radialf_read
 !--------------------------------------------------
 !--------------------------------------------------
-      end module mod_baseYfunciones_01y2
+      end module mod_baseYfunciones_Renner_01y2

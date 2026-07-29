@@ -1,11 +1,11 @@
 &INPUTGRIDBASE
-   NPUN1=        256, RMIS1= 0.01d0 ,   RFIN1=  30.d0    , NPUN1MIN=        64,
-   NPUN2=        620,   RMIS2= 0.01d0,  RFIN2=  36.d0     ,
+   NPUN1=        256, RMIS1= 0.01d0 , RFIN1=  30.d0    , NPUN1MIN=        64,
+   NPUN2=        620, RMIS2= 0.01d0 , RFIN2=  36.d0     ,
    NANGU=        160,   
    JTOT=          0,    IOMMIN=          0,   IOMMAX=          0,  IPARITY=          1,
    INC=          1, J0=          0,
    NELECMAX=          1,
-     JINI=          0, JMAX=          20,
+   JINI=          0, JMAX=          20,
    NVINI=          0,   NVMAX=         2,
    NVREF=          0,   JREF=          0,   IOMREF=          0,   IELECREF=          1,
 /
