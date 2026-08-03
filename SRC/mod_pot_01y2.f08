@@ -140,155 +140,144 @@ module mod_pot_01y2
    !--------------------------------------------------
       implicit none
 
-      real*8 :: x1max, x2max, angmax
-      real*8 :: vmin,x1min,x2min,angmin,ctet,r1,r2,rpeq,Rg
-      integer :: ie,ir1,ir2,iang,maxpoint,ielec,jelec,icount,maxpointang
+      real*8  :: x1max, x2max, angmax
+      real*8  :: vmin,x1min,x2min,angmin,ctet,r1,r2,rpeq,Rg
+      integer :: ie,ir1,ir2,iang,ielec,jelec,icount,maxpointang
       integer :: je,ke,nsend,ierror,icorte,ieleccut
-      real*8 :: x1,gam,x2,calpha,pp,vref,coefmax
-      real*8 :: vmat(nelecmax,nelecmax),potmat(nelecmax,nelecmax)
-      real*8 :: vdiagon(nelecmax,nelecmax)
-      real*8 :: Tpot(nelecmax,nelecmax),eigenpot(nelecmax)
-      real*8 :: vcutmax3, delta_e, ethres
+      real*8  :: x1,gam,x2,calpha,pp,vref,coefmax
+      real*8  :: vmat(nelecmax,nelecmax),potmat(nelecmax,nelecmax)
+      real*8  :: vdiagon(nelecmax,nelecmax)
+      real*8  :: Tpot(nelecmax,nelecmax),eigenpot(nelecmax)
+      real*8  :: vcutmax3, delta_e, ethres
 
-      vmaxtot=vcutmax
-      npunreal(:)=0
-      if(idproc.eq.0)then
-         print *, 
+      vmaxtot = vcutmax
+      npunreal(:) = 0
+      if(idproc == 0)then
+         print *
          print *, '   ** Calculating Potential **'
-         print *, 
+         print *
          print *, '         only in idproc=0 '
          open(10,file='func/eref',status='old')
          read(10,*)vref
          close(10)
          print *, '       substracting Eref(vref)= ',vref/conve1/eV2cm 
 
-         vmin=1.d10
-         x1min=1.d10
-         x2min=1.d10
-         angmin=1.d10
-         maxpoint=0
+         vmin     = 1.d10
+         x1min    = 1.d10
+         x2min    = 1.d10
+         angmin   = 1.d10
+         maxpoint = 0
 
-         do iang=1,nangu
-            ctet=cgamma(iang)
+         do iang=1, nangu
+            ctet = cgamma(iang)
             print *, 'iang=', iang
-            call flush(6)
             write(name,'("pot/pot.",i3.3,".dat")')iang
             print *, ' writting file = ',name
-            call flush(6)
             open(10,file=name,status='new')
+
             npunreal(iang)=0
-            do ir2=1,npun2
-            r2=rmis2+dble(ir2-1)*ah2
-            do ir1=1,npun1
-               r1=rmis1+dble(ir1-1)*ah1
 
-               rpeq=r1/convl  ! to call pot in a.u.
-               Rg=r2/convl
-               ctet=cgamma(iang)
-               if(radau.eq.0)then
-
-                  X1=rpeq
-                  gam=xm1/(xm0+xm1)
-                  X2=Rg*Rg+gam*gam*rpeq*rpeq+2.d0*gam*Rg*rpeq*ctet
-                  X2=dsqrt(X2)
-                  calpha=(Rg*ctet+gam*rpeq)/X2
-                  if(dabs(calpha).gt.1.d0)then
-                     calpha=calpha/dabs(calpha)
+            do ir2 = 1, npun2
+               r2 = rmis2 + dble(ir2-1) * ah2
+               do ir1 = 1, npun1
+                  r1 = rmis1 + dble(ir1-1) * ah1
+                  rpeq = r1/convl  ! to call pot in a.u.
+                  Rg = r2/convl
+                  if (radau == 0) then
+                     x1 = rpeq
+                     gam = xm1/(xm0+xm1)
+                     x2 = Rg*Rg+gam*gam*rpeq*rpeq+2.d0*gam*Rg*rpeq*ctet
+                     x2 = dsqrt(x2)
+                     calpha = (Rg*ctet+gam*rpeq)/x2
+                     if(dabs(calpha) > 1.d0) then
+                        calpha = calpha/dabs(calpha)
+                     endif
+                  elseif(radau == 1)then
+                     x1 = rpeq
+                     x2 = Rg
+                     calpha = ctet
                   endif
-               elseif(radau.eq.1)then
-                  x1=rpeq
-                  x2=Rg
-                  calpha=ctet
-               endif
-               call potelebond(x1,x2,calpha,potmat,nelecmax,nelecmax)
 
-               do ie=1,nelecmax
-               do je=1,nelecmax
-                  vmat(ie,je)=potmat(ie,je)/conve*conve1
-                  if(ie.eq.je)vmat(ie,je)=vmat(ie,je)-vref
-               enddo
-               enddo
+                  call potelebond(x1,x2,calpha,potmat,nelecmax,nelecmax)
 
-            
-               if(nelecmax.eq.1)then
-                  Tpot(1,1)=1.d0
-                  eigenpot(1)=vmat(1,1)
-               else
-                  Tpot(:,:)=0.d0
-                  eigenpot(:)=0.d0
-                  vdiagon=vmat
-                  call DIAGON(vdiagon,nelecmax,nelecmax,Tpot,EIGENpot)
-
-                  ethres = 3 * vcutmax
-                  delta_e = 0.05
                   do ie = 1, nelecmax
-                        if (EIGENpot(ie) > ethres) then
-                           EIGENpot(ie) = ethres + delta_e *
-      &             dtanh((EIGENpot(ie) - ethres) / delta_e)
-                        end if
-                  end do
+                     do je = 1, nelecmax
+                        vmat(ie,je) = potmat(ie,je)/conve*conve1
+                        if(ie == je) vmat(ie,je) = vmat(ie,je)-vref
+                     enddo
+                  enddo
 
-                  ! Reconstruct vmat
-                  vmat(:,:) = 0.d0
-                  do je = 1, nelecmax
+                  if(nelecmax == 1)then
+                     Tpot(1,1) = 1.d0
+                     eigenpot(1) = vmat(1,1)
+                  else
+                     Tpot(:,:) = 0.d0
+                     eigenpot(:) = 0.d0
+                     vdiagon = vmat
+                     call DIAGON(vdiagon,nelecmax,nelecmax,Tpot,EIGENpot)
+
+                     ethres = 3 * vcutmax
+                     delta_e = 0.05
                      do ie = 1, nelecmax
-                        do ke = 1, nelecmax
-                           vmat(ie,je) = vmat(ie,je) +
-      &              Tpot(ie,ke) * EIGENpot(ke) * Tpot(je,ke)
+                           if (EIGENpot(ie) > ethres) then
+                              EIGENpot(ie) = ethres + delta_e * dtanh((EIGENpot(ie) - ethres) / delta_e)
+                           end if
+                     end do
+
+                     ! Reconstruct vmat
+                     vmat(:,:) = 0.d0
+                     do je = 1, nelecmax
+                        do ie = 1, nelecmax
+                           do ke = 1, nelecmax
+                              vmat(ie,je) = vmat(ie,je) + Tpot(ie,ke) * EIGENpot(ke) * Tpot(je,ke)
+                           end do
                         end do
                      end do
-                  end do
-               endif
+                  endif
 
-               icorte=0
-               do ielec=1,nelecmax
-                  if(eigenpot(ielec).gt.vcutmax)icorte=icorte+1
-               enddo
+                  icorte=0
+                  do ielec=1,nelecmax
+                     if(eigenpot(ielec).gt.vcutmax)icorte=icorte+1
+                  enddo
 
+                  ! if(icorte.ge.1)then    
+                     ! print *, ' vcutmax= ',vcutmax,iang,r2,r1
+                     ! print *, ' eigenpot= ',eigenpot
+                     ! print *, ' Vmat '
+                     ! do ielec=1,nelecmax
+                        ! print *, (vmat(jelec,ielec),jelec=1,nelecmax)
+                     ! enddo
+                  ! endif
                   
-                  if(icorte.ge.1)then
-      !----                     
-      !                       print *, ' vcutmax= ',vcutmax,iang,r2,r1
-      !                        print *, ' eigenpot= ',eigenpot
-      !                         print *, ' Vmat '
-      !                        do ielec=1,nelecmax
-      !                         print *, (vmat(jelec,ielec),jelec=1,nelecmax)
-      !                      enddo
-      !----                      
-                     
-                  endif
-                  
-               icount=0
-               do ielec=1,nelecmax              
-                  if(eigenpot(ielec).lt.vcutmax)icount=icount+1
-                  if(eigenpot(ielec).lt.vmin)then
-                        vmin=eigenpot(ielec)
-                        x1min=r1
-                        x2min=r2
-                        angmin=dacos(cgamma(iang))*180.d0/pi
-                  endif
-                  if(icount.gt.0 .and. eigenpot(ielec).gt.vmaxtot)then
-                        vmaxtot=eigenpot(ielec)
-                        x1max=r1
-                        x2max=r2
-                        angmax=dacos(cgamma(iang))*180.d0/pi
-                  endif
-               enddo
+                  icount=0
+                  do ielec=1,nelecmax              
+                     if(eigenpot(ielec).lt.vcutmax)icount=icount+1
+                     if(eigenpot(ielec).lt.vmin)then
+                           vmin=eigenpot(ielec)
+                           x1min=r1
+                           x2min=r2
+                           angmin=dacos(cgamma(iang))*180.d0/pi
+                     endif
+                     if(icount.gt.0 .and. eigenpot(ielec).gt.vmaxtot)then
+                           vmaxtot=eigenpot(ielec)
+                           x1max=r1
+                           x2max=r2
+                           angmax=dacos(cgamma(iang))*180.d0/pi
+                     endif
+                  enddo
                
                if(icount.gt.0)then
                      npunreal(iang)=npunreal(iang)+1
                      if(idproc.eq.0)then
-                  write(10,*)ir1,ir2,((vmat(ielec,jelec),ielec=1,nelecmax)
-      &                                                ,jelec=1,nelecmax)
+                  write(10,*)ir1,ir2,((vmat(ielec,jelec),ielec=1,nelecmax),jelec=1,nelecmax)
                      endif
                endif ! icount > 0 
 
-               if(npunreal(iang).gt.npun1*npun2
-      &          .or.npunreal(iang).lt.0)then
+               if(npunreal(iang).gt.npun1*npun2.or.npunreal(iang).lt.0)then
                   print *, ' problem with npunreal for iang= ',iang
                   print *, ir1,ir2,npunreal(iang)
                endif
-            enddo ! ir1
+               enddo ! ir1
             enddo ! ir2
 
             close(10)
