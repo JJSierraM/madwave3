@@ -1,8 +1,8 @@
 function factor(from, to) result(output)
    integer, intent(in) :: from, to
-   integer :: output = 1.0
-   integer :: iter
+   integer :: output, iter
 
+   output = 1
    do iter = from, to
       output = output * iter
    end do
@@ -70,7 +70,7 @@ subroutine dwigner(dj,jmax2,m2,mp2,beta,ndim)
       ene = min(abs(m2),abs(mp2))/2
       eme = max(abs(m2),abs(mp2))/2
 
-      fact = sqrt(factor(jmin2/2+ene+1, jmin2/2+eme)/factor(jmin2/2-eme+1,jmin2/2-ene))
+      fact = sqrt(dble(factor(jmin2/2+ene+1, jmin2/2+eme)/factor(jmin2/2-eme+1,jmin2/2-ene)))
 
       ! *b)
       sign = 1.d0
@@ -185,67 +185,76 @@ end
 
 ! *************************  tqli  ****************************
 
-SUBROUTINE TQLI(D,E,N,NP)
-   implicit real*8(a-h,o-z)
+subroutine tqli(d, e, n, np)
+   ! implicit real*8(a-h,o-z)
+   implicit none 
+   real*8, intent(inout) ::  d(np), e(np)
+   integer, intent(in) :: n, np
+
+   integer :: l, iter, m, i
+   real*8 :: g, r, s, c, p, f, b
 ! ****************************************************
 ! ***    diagonalization of a tridiagonal matrix   ***
 ! ***         from numerical recipies              ***
 ! ****************************************************
-   DIMENSION D(NP),E(NP)
-   IF (N > 1) THEN
+
+   if (n > 1) then
 ! c overide of silly num recipes convention for off-diagonal
 ! c elements.  It is now assumed off diags are in E(1)..E(N-1)
 ! c        DO 11 I=2,N
 ! c          E(I-1)=E(I)
 ! c11      CONTINUE
-      E(N)=0.d0
-      DO 15 L=1,N
-         ITER=0
-1         DO 12 M=L,N-1
-         DD=dABS(D(M))+dABS(D(M+1))
-         IF (dABS(E(M))+DD == DD) GO TO 2
-12        CONTINUE
-         M=N
-2         IF(M.NE.L)THEN
-         IF(ITER == 500)write(6,*) 'too many iterations'
-         ITER=ITER+1
-         G=(D(L+1)-D(L))/(2.d0*E(L))
-         R=dSQRT(G**2+1.d0)
-         G=D(M)-D(L)+E(L)/(G+dSIGN(R,G))
-         S=1.d0
-         C=1.d0
-         P=0.d0
-         DO 14 I=M-1,L,-1
-            F=S*E(I)
-            B=C*E(I)
-            IF(dABS(F).GE.dABS(G))THEN
-               C=G/F
-               R=dSQRT(C**2+1.d0)
-               E(I+1)=F*R
-               S=1.d0/R
-               C=C*S
-            ELSE
-               S=F/G
-               R=dSQRT(S**2+1.d0)
-               E(I+1)=G*R
-               C=1.d0/R
-               S=S*C
-            ENDIF
-            G=D(I+1)-P
-            R=(D(I)-G)*S+2.d0*C*B
-            P=S*R
-            D(I+1)=G+P
-            G=C*R-B
-14          CONTINUE
-         D(L)=D(L)-P
-         E(L)=G
-         E(M)=0.d0
-         GO TO 1
-         ENDIF
-15      CONTINUE
-   ENDIF
-   RETURN
-END
+      e(n)=0.d0
+      do l=1, n
+         ! iter = 0
+         do m = l, n-1
+            if (e(m) == 0) then
+               exit
+            end if
+         end do 
+
+         if(m == l) cycle
+
+         ! if (iter == 500) print *, 'too many iterations'
+         ! iter = iter + 1
+
+         g = (d(l+1) - d(l)) / (2.d0 * e(l))
+         r = sqrt(g**2 + 1.d0)
+         g = d(m) - d(l) + e(l) / (g + sign(r,g))
+
+         s = 1.d0
+         c = 1.d0
+         p = 0.d0
+
+         do i = m-1, l, -1
+            f = s * e(i)
+            b = c * e(i)
+            if (abs(f) >= abs(g)) then
+               c = g/f
+               r = sqrt(c**2 + 1.d0)
+               e(i+1) = f*r
+               s = 1.d0 / r
+               c = c * s
+            else
+               s = f/g
+               r = sqrt(s**2 + 1.d0)
+               e(i+1) = g * r
+               c = 1.d0 / r
+               s = s * c
+            end if
+            g = d(i+1) - p
+            r = (d(i)-g) * s + 2.d0*c*b
+            p = s*r
+            d(i+1) = g+p
+            g = c*r-b
+         end do
+         d(l) = d(l) - p
+         e(l) = g
+         e(M) = 0.d0
+         ! GO TO 1
+      end do
+   end if
+end subroutine
 
 ! **************************  SPLIN  **********************************
 
@@ -1111,8 +1120,7 @@ subroutine tresj(j1,j2,j3,m1,m2,m3,coef)
 
    coef=0.d0
 
-   if(m1+m2+m3 == 0.and.trian(j1,j2,j3).ne.0.d0)then
-
+   if(m1+m2+m3 == 0 .and. trian(j1,j2,j3) /= 0.d0)then
          b=fact(j1+m1)+fact(j1-m1)+fact(j2+m2)+fact(j2-m2)+fact(j3+m3)+fact(j3-m3)
          b=0.5d0*b
 
@@ -1123,24 +1131,21 @@ subroutine tresj(j1,j2,j3,m1,m2,m3,coef)
          k5=j2+m2
 
          kmin=max0( -k1 , -k2 , 0 )
-         kmax=min0( k3 , k4 , k5 )
+         kmax=min0(  k3 ,  k4 , k5 )
 
-            isign=-1
-            if(mod(kmin,2) == 0)isign=1
+         isign=-1
+         if(mod(kmin,2) == 0)isign=1
 
-            do 10 k=kmin,kmax 
+         do k=kmin, kmax 
             a=fact(k)+fact(k3-k)+fact(k4-k)+fact(k5-k)+fact(k1+k)+fact(k2+k)
             coef=coef+isign*dexp(b-a)
             isign=isign*(-1) 
-10          continue
+         end do
 
-            isign=-1
-            if(mod(j1-j2-m3,2) == 0)isign=1
-            coef=coef*trian(j1,j2,j3)*isign
-
+         isign=-1
+         if(mod(j1-j2-m3,2) == 0) isign=1
+         coef = coef * trian(j1,j2,j3) * isign
    endif
-
-   return
 end
 ! *******************************  NPLEGM  ********************************
 
