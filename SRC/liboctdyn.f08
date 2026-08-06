@@ -185,14 +185,14 @@ end
 
 ! *************************  tqli  ****************************
 
-subroutine tqli(d, e, n, np)
+subroutine new_tqli(d, e, n, np)
    ! implicit real*8(a-h,o-z)
    implicit none 
    real*8, intent(inout) ::  d(np), e(np)
    integer, intent(in) :: n, np
 
-   integer :: l, iter, m, i
-   real*8 :: g, r, s, c, p, f, b
+   integer :: l=0, iter=0, m=0, i=0
+   real*8 :: g=0, r=0, s=0, c=0, p=0, f=0, b=0
 ! ****************************************************
 ! ***    diagonalization of a tridiagonal matrix   ***
 ! ***         from numerical recipies              ***
@@ -206,52 +206,52 @@ subroutine tqli(d, e, n, np)
 ! c11      CONTINUE
       e(n)=0.d0
       do l=1, n
-         ! iter = 0
-         do m = l, n-1
+        do while (1 > 0)
+            do m = l, n
             if (e(m) == 0) then
-               exit
+                exit
             end if
-         end do 
+            end do 
 
-         if(m == l) cycle
+            if(m == l) exit
 
-         ! if (iter == 500) print *, 'too many iterations'
-         ! iter = iter + 1
+            ! if (iter == 500) print *, 'too many iterations'
+            ! iter = iter + 1
 
-         g = (d(l+1) - d(l)) / (2.d0 * e(l))
-         r = sqrt(g**2 + 1.d0)
-         g = d(m) - d(l) + e(l) / (g + sign(r,g))
+            g = (d(l+1) - d(l)) / (2.d0 * e(l))
+            r = sqrt(g**2 + 1.d0)
+            g = d(m) - d(l) + e(l) / (g + sign(r,g))
 
-         s = 1.d0
-         c = 1.d0
-         p = 0.d0
+            s = 1.d0
+            c = 1.d0
+            p = 0.d0
 
-         do i = m-1, l, -1
-            f = s * e(i)
-            b = c * e(i)
-            if (abs(f) >= abs(g)) then
-               c = g/f
-               r = sqrt(c**2 + 1.d0)
-               e(i+1) = f*r
-               s = 1.d0 / r
-               c = c * s
-            else
-               s = f/g
-               r = sqrt(s**2 + 1.d0)
-               e(i+1) = g * r
-               c = 1.d0 / r
-               s = s * c
-            end if
-            g = d(i+1) - p
-            r = (d(i)-g) * s + 2.d0*c*b
-            p = s*r
-            d(i+1) = g+p
-            g = c*r-b
-         end do
-         d(l) = d(l) - p
-         e(l) = g
-         e(M) = 0.d0
-         ! GO TO 1
+            do i = m-1, l, -1
+                f = s * e(i)
+                b = c * e(i)
+                if (abs(f) >= abs(g)) then
+                    c = g/f
+                    r = sqrt(c**2 + 1.d0)
+                    e(i+1) = f*r
+                    s = 1.d0 / r
+                    c = c * s
+                else
+                    s = f/g
+                    r = sqrt(s**2 + 1.d0)
+                    e(i+1) = g * r
+                    c = 1.d0 / r
+                    s = s * c
+                end if
+                g = d(i+1) - p
+                r = (d(i)-g) * s + 2.d0*c*b
+                p = s*r
+                d(i+1) = g+p
+                g = c*r-b
+            end do
+            d(l) = d(l) - p
+            e(l) = g
+            e(M) = 0.d0
+        end do
       end do
    end if
 end subroutine
