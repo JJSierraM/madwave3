@@ -185,7 +185,7 @@ end
 
 ! *************************  tqli  ****************************
 
-subroutine new_tqli(d, e, n, np)
+subroutine tqli(d, e, n, np)
    ! implicit real*8(a-h,o-z)
    implicit none 
    real*8, intent(inout) ::  d(np), e(np)
