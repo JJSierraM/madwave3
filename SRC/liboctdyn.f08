@@ -181,7 +181,6 @@ subroutine factorial
       fact(i)=fact(i-1)+dlog(dble(i))
    end do 
 end
-                                                            
 
 ! *************************  tqli  ****************************
 
@@ -191,7 +190,7 @@ subroutine tqli(d, e, n, np)
    real*8, intent(inout) ::  d(np), e(np)
    integer, intent(in) :: n, np
 
-   integer :: l=0, iter=0, m=0, i=0
+   integer :: l=0, m=0, i=0
    real*8 :: g=0, r=0, s=0, c=0, p=0, f=0, b=0
 ! ****************************************************
 ! ***    diagonalization of a tridiagonal matrix   ***
@@ -258,51 +257,42 @@ end subroutine
 
 ! **************************  SPLIN  **********************************
 
-! c     FUNCTION SPLINQ(F,X,IOLD,NX,R,ndim)
-subroutine SPLINQQ(F,X,IOLD,NX,R,ndim,spl)
-      IMPLICIT real*8 (A-H,O-Z)
-! C **********************************************************************
-! C  USE IOLD TO SAVE TIME IF SPLINT IS GOING TO BE CALLED FOR INCREASING
-! C  VALUES OF R:
-! C    - FOR 1ST CALL, SET IOLD TO 2
-! C    - FOR THE FOLLOWING CALLS, USE THE OUT VALUE OF IOLD
-! C  IF THE VALUES OF R ARE NOT MONOTONICALLY INCREASING, USE SPLINT OR
-! C  SPLINQQ OR SPLINP
-! C----------------------------------------------------------------------
-! C  C. LEFORESTIER, UNIVERSITE PARIS-SUD, ORSAY, FRANCE.
-! C  MODIFICATIONS BY N. HALBERSTADT, CNRS, ORSAY, FRANCE.
-! C **********************************************************************
-      DIMENSION U(4)
-      DIMENSION F(ndim,2),X(ndim)
-      DATA UN/1D0/,TWO/2D0/,THREE/3D0/
-! C
-      IF(R.GE.X(NX)) GO TO 30
-      DO 10 IDOL = IOLD, NX
-      IF(R.LT.X(IDOL)) GOTO 20
-   10 CONTINUE
-   20 IOLD = IDOL
-      HI=X(IDOL)-X(IDOL-1)
-      XR=(R-X(IDOL-1))/HI
-      U(1)=XR*XR*(-TWO*XR+THREE)
-      U(3)=HI*XR*XR*(XR-UN)
-      U(2)=UN-U(1)
-      U(4)=HI*XR*((XR-TWO)*XR+UN)
-      SPLINQ=U(1)*F(IDOL,1)+U(2)*F(IDOL-1,1)&
-      +U(3)*F(IDOL,2)+U(4)*F(IDOL-1,2)
-      spl=splinq
-      RETURN
-! C  >>> WARNING: THIS EXTENSION IS NOT VALID FOR EVERY POTENTIAL <<<
-30    RO=X(NX)
-      YO=F(NX,1)
-      N2X=2*NX
-      YP=F(NX,2)
-      AIN=YO+YP*RO/6.D0
-      C8=-AIN*3.D0*RO**8
-      C6=YO*RO**6-C8/RO/RO
-      SPLINQ=C6/R**6+C8/R**8
-      spl=splinq
-         RETURN
-END
+subroutine splinqq(f, x, iold, nx, r, ndim, spl)
+   implicit none
+   real*8, intent(in) :: f(ndim, 2), x(ndim), r
+   real*8, intent(out) :: spl
+   integer, intent(inout) :: iold
+   integer, intent(in) :: nx, ndim
+
+   real*8 :: u(4), ro, yo, yp, ain, c8, c6, hi, xr
+   integer :: idol
+
+   if ( r >= x(nx) ) then
+      ro = x(nx)
+      yo = f(nx, 1)
+      yp = f(nx,2)
+      ain = yo + yp * ro / 6.0
+      c8 = - ain * 3.0 * ro ** 8
+      c6 = yo * ro ** 6 - c8 / ro / ro
+      spl = c6 / r ** 6 + c8 / r ** 8
+   else
+      do idol = iold, nx
+         if ( r < x(idol) ) then
+            exit
+         end if
+      end do
+      iold = idol
+      hi = x(idol) - x(idol-1)
+      xr = (r-x(idol-1)) / hi
+      u(1) = xr * xr * (-2.0*xr + 3.0)
+      u(2) = 1.0 - u(1)
+      u(3) = hi * xr * xr * (xr - 1.0)
+      u(4) = hi * xr * ((xr-2.0) * xr + 1.0)
+      spl = u(1) * f(idol,1) + u(2) * f(idol-1,1) + u(3) * f(idol,2) + u(4) * f(idol-1,2)
+   end if
+
+end subroutine splinqq
+
 SUBROUTINE SPLSET(F,X,NX,ndim)
       IMPLICIT DOUBLE PRECISION(A-H,O-Z)
 ! C***********************************************************************
