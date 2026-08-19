@@ -293,67 +293,62 @@ subroutine splinqq(f, x, iold, nx, r, ndim, spl)
 
 end subroutine splinqq
 
-SUBROUTINE SPLSET(F,X,NX,ndim)
-      IMPLICIT DOUBLE PRECISION(A-H,O-Z)
+subroutine splset (f, x, nx, ndim)
 ! C***********************************************************************
-! C*                                                                     *
-! C*        THIS ROUTINE SETS THE SPLINE INTERPOLATION ON THE GRID       *
-! C*    (X(I),I=1,NX) FOR THE FUNCTION (F(I),I=1,NX).                    *
+! c*        This routine sets the spline interpolation on the grid       *
+! c*            (x(i),i=1,nx) for the function (f(i),i=1,nx).            *
 ! C***********************************************************************
-! C
-! C
-      PARAMETER (NXMAX=60000)
-! C
-      DIMENSION F(ndim,2),X(ndim)
-      DIMENSION HX(NXMAX)
-      DIMENSION RLX(NXMAX-1),RMUX(NXMAX-1),XI(NXMAX-1),B(NXMAX-1)
-      DIMENSION AB(4),YZ(4),A(4)
-! C
-      DATA UN/1.0D0/,THREE/3.0D0/
-! C
-      IF (NX > NXMAX) GO TO 999
-! C
-      NX2=NX-2
-! C     COMPUTE THE HX'S
-      DO 10 I=2,NX
-   10 HX(I-1)=X(I)-X(I-1)
-! C     COMPUTE LAMBDA'S & MU'S
-      DO 40 I=1,NX2
-      RLX(I)=HX(I+1)/(HX(I)+HX(I+1))
-   40 RMUX(I)=UN-RLX(I)
-      MAN=NX-3
-      DO 60 I=1,4
-      A(I)=X(MAN)
-   60 MAN=MAN+1
-! C
-! C     SPLINE-FIT DE P(X)
-      DO 110 I=1,4
-      AB(I)=F(I,1)
-  110 YZ(I)=F(NX+I-4,1)
-      P0=DLAGRA(X,AB,4,1)
-      F(1,2)=P0
-      PN=DLAGRA(A,YZ,4,4)
-      F(NX,2)=PN
-! C     CALCUL SECOND MEMBRE
-      DO 120 I=1,NX2
-  120 B(I)=THREE*RLX(I)/HX(I)*(F(I+1,1)-F(I,1)) &
-      +THREE*RMUX(I)/HX(I+1)*(F(I+2,1)-F(I+1,1))
-      B(1)=B(1)-RLX(1)*P0
-      B(NX2)=B(NX2)-RMUX(NX2)*PN
-      CALL JORDAN(RMUX,RLX,XI,NX2,B)
-      DO 100 I=1,NX2
-  100 F(I+1,2)=XI(I)
-      RETURN
-! C
- 999  CONTINUE
-      PRINT 9000
-      PRINT 9999, NXMAX, NX
-      STOP
-! C
- 9000 FORMAT(//,2X,20('*'),' STOP IN SPLSET ',20('*'),/)
- 9999 FORMAT(2X,'DIMENSION PARAMETER NXMAX = ',I5,' TOO SMALL, '&
-      ,I5,' REQUIRED')
-END
+   implicit none
+   integer, parameter :: nxmax = 60000
+   integer, intent(in) :: nx, ndim
+   real*8, intent(inout) :: f(ndim,2)
+   real*8, intent(in) :: x(ndim)
+
+   real*8 :: hx(nxmax), rlx(nxmax-1), rmux(nxmax-1), xi(nxmax-1), b(nxmax-1)
+   real*8 :: ab(4), yz(4), a(4), p0, pn
+   integer:: i, nx2, man
+
+   real*8, external :: dlagra
+
+   if ( nx > nxmax ) then
+        print "(//,2X,20('*'),' STOP IN SPLSET ',20('*'),/)"
+        print "(2X,'DIMENSION PARAMETER NXMAX = ',I5,' TOO SMALL, ',I5,' REQUIRED')", nxmax, nx
+   else
+        nx2 = nx-2
+        do i = 2, nx
+            hx(i-1) = x(i) - x(i-1)
+        end do
+        do i = 1, nx2
+            rlx(i)  = hx(i+1) / (hx(i) + hx(i+1))
+            rmux(i) = 1.0 - rlx(i)
+        end do
+        man = nx - 3
+        do i = 1, 4
+            a(i) = x(man)
+            man = man + 1
+        end do
+
+        ! spline-fit of p(x)
+        do i = 1, 4
+            ab(i) = f(i,1)
+            yz(i) = f(nx+i-4,1)      
+        end do
+        p0 = dlagra(x, ab, 4, 1)
+        f(1,2) = p0
+        pn = dlagra(a, yz, 4, 4)
+        f(nx, 2) = pn
+        do i = 1, nx2
+            b(i) = 3.0 * rlx(i) / hx(i) * (f(i+1,1) - f(i,1)) + 3.0 * rmux(i) / hx(i+1) * (f(i+2,1) - f(i+1,1))
+        end do
+        b(1) = b(1) - rlx(1) * p0
+        b(nx2) = b(nx2) - rmux(nx2) * pn
+        call jordan(rmux, rlx, xi, nx2, b)
+        do i = 1, nx2
+            f(i+1, 2) = xi(i)
+        end do
+    end if
+end subroutine splset
+
 ! *********************************  SCHR *************************
 
 SUBROUTINE SCHR(E0,RMIN,RMAX,N,MAXIT,EPS,E2,KV,ITRY,v,p,npunt)
