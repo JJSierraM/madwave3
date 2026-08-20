@@ -701,8 +701,8 @@ subroutine bessen (l, x, g, dg, r)
                g1 = g2
             end do
          end if
-         G = W * (G1*DBLE(2*L-1)*Z - G0  )
-         DG = G1   - DBLE(L+1)*G*Z
+         g = w * (g1 * dble(2*l-1) * z - g0  )
+         dg = g1 - dble(l+1) * g * z
       end if
    end if
 end subroutine bessen
