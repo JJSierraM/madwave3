@@ -351,164 +351,167 @@ end subroutine splset
 
 ! *********************************  SCHR *************************
 
-SUBROUTINE SCHR(E0,RMIN,RMAX,N,MAXIT,EPS,E2,KV,ITRY,v,p,npunt)
-      IMPLICIT real*8(A-H,O-Z) 
-      DIMENSION Y(3),p(npunt),v(npunt)
+subroutine schr(e0,rmin,rmax,n,maxit,eps,e2,kv,v,p,npunt)
+   implicit none
+   real*8, intent(in)  :: e0,rmin,rmax,eps,v(npunt)
+   real*8, intent(inout):: p(npunt), e2
+   integer, intent(in) :: n, maxit, npunt
+   integer, intent(inout) :: kv
 
-      ITRY=0
-      H=(RMAX-RMIN)/DFLOAT(N-1)
-      H2=H**2
-      HV=H2/12.d0
-      E=E0
-      TEST=-1.d0
-      DE=0.d0
-      DO 1 I=1,N
-1     P(I)=0.d0
-! C     BOUCLE DES ITERATIONS
-   12 DO 171 IT=1,MAXIT
-     
-      XIT=IT
-! C     INTEGRATION VERS L-INTERIEUR.PREMIERS PAS
-      P(N)=1.d-30
-      GN=V(N)-E
-      GI=V(N-1)-E
-! C     E EST-IL TROP GRAND
-      IF(GI.GE.0.d0) GO TO 36
-      E=V(N-2)
-      GO TO 36
-  900 PRINT 899
-  899 FORMAT('LA TECHNIQUE UTILISEE EST EN DEFAUT')
-      ITRY=1
-  914 FORMAT(1H ,5(5X,E13.6))
-      RETURN
-36    APR=(RMAX-H)*DSQRT(GI)-RMAX*DSQRT(GN)
-      IF(APR > 50.d0) APR=50.d0
-      P(N-1)=P(N)*DEXP(-APR)
-38    Y(1)=(1.d0-HV*GN)*P(N)
-40    Y(2)=(1.d0-HV*GI)*P(N-1)
- 
-! C     INTEGRATION
-   44 M=N-2
-   46 Y(3)=Y(2)+((Y(2)-Y(1))+H2*GI*P(M+1))
-   48 GI=V(M)-E
-50    P(M)=Y(3)/(1.d0-HV*GI)
-52    IF(DABS(P(M)).LT.1.d+34) GO TO 70
- 
-! C     DEPASSEMENT DE LA LIMITE
-      M1=M+1
-      PM=P(M1)
-179   FORMAT(2X,'PM = ',E16.8/)
-   55 DO 56 J=M1,N
-   56 P(J)=P(J)/PM
-   58 Y(1)=Y(1)/PM
-! C
-! C     NOUVEAU DEPART
-   60 Y(2)=Y(2)/PM
-   62 Y(3)=Y(3)/PM
-      GI=V(M+1)-E
-      GO TO 46
-! C     L-INTEGRATION VERS L-INTERIEUR EST-ELLE TERMINEE
-   70 IF((DABS(P(M)).LE.DABS(P(M+1))).OR.(M.LE.2))GO TO 90
-   81 Y(1)=Y(2)
-   82 Y(2)=Y(3)
-   84 M=M-1
-      GO TO 46
-! C     L-INTEGRATION VERS L-INTERIEUR EST TERMINEE
-   90 PM=P(M)
-      MSAVE=M
-   92 YIN=Y(2)/PM
-   94 DO 96 J=M,N
-   96 P(J)=P(J)/PM
-! C     INTEGRATION VERS L-EXTERIEUR.PREMIERS PAS
-100   P(1)=1.d0
-  102 Y(1)=0.d0
-  104 GI=V(1)-E
-106   Y(2)=(1.D0-HV*GI)*P(1)
-! C
-! C     INTEGRATION
-  108 DO 132 I=2,M
-  110 Y(3)=Y(2)+((Y(2)-Y(1))+H2*GI*P(I-1))
-  112 GI=V(I)-E
-114   P(I)=Y(3)/(1.d0-HV*GI)
-116   IF(DABS(P(I)).LT.1.d+34) GO TO 130
-! C     LA LIMITE A ETE DEPASSEE
-  118 I1=I-1
-      PM=P(I1)
-      DO 120 J=1,I1
-  120 P(J)=P(J)/PM
-  122 Y(1)=Y(1)/PM
-  124 Y(2)=Y(2)/PM
-  126 Y(3)=Y(3)/PM
-      GI=V(I1)-E
-      GO TO 110
-  130 Y(1)=Y(2)
-  132 Y(2)=Y(3)
-! C     L-INTEGRATION VERS L-EXTERIEUR EST TERMINEE
-! C
-      PM=P(M)
-      IF(PM) 135,149,135
-  135 YOUT=Y(1)/PM
-  136 YM=Y(3)/PM
-  138 DO 140 J=1,M
-  140 P(J)=P(J)/PM
-! C     LES DEUX BRANCHES SONT MAINTENANT RACCORDEES
-! C     CORRECTION
-142   DF=0.d0
-  144 DO 146 J=1,N
-  146 DF=DF-P(J)**2
-148   F=(-YOUT-YIN+2.d0*YM)/H2+(V(M)-E)
-      DOLD=DE
-      IF(DABS(F).LT.1.d+37) GO TO 150
-149   F=9.99999d+29
-      DF=-F
-      DE=DABS(0.0001d0*E)
-      GO TO 152
-  150 DE=-F/DF
-  152 CONTINUE
-  156 FORMAT(I2,5X,E16.8,5X,E16.8,5X,E16.8,5X,E16.8)
-  164 EOLD=E
-      E=E+DE
-      TEST=DMAX1((DABS(DOLD)-DABS(DE)),TEST)
-      IF(TEST.LT.0.d0) GO TO 171
-      IF(DABS(E-EOLD).LT.EPS)GO TO 172
-  171 CONTINUE
+   integer  :: itry, i, it, xit, m, m1, j, msave, i1, nl
+   real*8   :: y(3), h, h2, hv, e, test, de, gn, gi, apr, pm, yin, eold, yout, ym, df, f, dold, schrod, sn
 
-      SCHROD=1.d0
-      GO TO 173
-! C     LES ITERATIONS SONT TERMINEES
-172   SCHROD=0.d0
+   itry = 0
+   h = (rmax - rmin) / (dble(n)-1)
+   h2 = h**2
+   hv = h2 / 12.0
+   e = e0
+   test = -1.0
+   de = 0.0
 
-! C     LES ITERATIONS ONT CONVERGE
-! C     COMPTAGE DES NOEUDS
-  173 KV=0
-      NL=N-2
-  174 DO 192 J=3,NL
-  176 IF(P(J))178,177,177
-  177 IF(P(J-1))180,192,192
-  178 IF(P(J-1))192,270,184
-! C     NOEUD POSITIF
-  180 IF(P(J+1))192,182,182
-  182 IF(P(J-2))190,192,192
-! C     NOEUD NEGATIF
-  184 IF(P(J+1))186,192,192
-  186 IF(P(J-2))192,190,190
-! C     LE NOEUD EST-IL DU A UN SOUS-DEPASSEMENT
-  270 IF(P(J+1))280,192,192
-  280 IF(P(J-2))192,192,190
-  190 KV=KV+1
-  192 CONTINUE
-      E2=E
-! C     NORMALISATION
+   do i = 1, n
+      p(i) = 0.0
+   end do
+   do it = 1, maxit
+      xit = it
+      p(n) = 1.d-30
+      gn = v(n) - e
+      gi = v(n-1) - e
+      if ( gi < 0.0 ) then
+         e = v(n-2)
+      end if
+      apr = (rmax - h) * sqrt(gi) - rmax * sqrt(gn)
+      if ( apr > 50.0 ) then
+         apr = 50.0
+      end if
+      p(n-1) = p(n) * exp(-apr)
+      y(1) = (1.d0 - hv * gn) * p(n)
+      y(2) = (1.d0 - hv * gi) * p(n-1)
 
-  200 SN=DSQRT(-H*DF)
-  202 DO 204 J=1,N
-  204 P(J)=P(J)/SN
-  250 FORMAT(10X,'SCHR=',I1,/)
-! C     ECRITURE DE LA SOLUTION
-  214 FORMAT('V=',I3,5X,' E=',E16.8/)
-  228 FORMAT(10X,E16.8,10X,E16.8)
-      RETURN
-      END
+      ! integration
+      m = n-2
+      do while (.TRUE.)
+            y(3) = y(2) + ((y(2) - y(1)) + h2 * gi * p(m+1))
+            gi = v(m) - e
+            p(m) = y(3) / (1.d0 - hv * gi)
+            if ( abs(p(m)) > 1.d+34) then
+               m1 = m+1
+               pm = p(m1)
+               print *, "(2X,'PM = ',E16.8/)"
+               do j = m1, n
+                  p(j) = p(j) / pm
+               end do
+               y(1) = y(1) / pm
+               y(2) = y(2) / pm
+               y(3) = y(3) / pm
+               gi = v(m1) - e
+               cycle
+            end if
+            if ( abs(p(m)) <= abs(p(m+1)) .OR. m <= 2) then
+               exit
+            end if
+            y(1) = y(2)
+            y(2) = y(3)
+            m = m-1
+      end do
+      pm = p(m) 
+      msave = m
+      yin = y(2)/pm
+      do j = m, n
+         p(j) = p(j) / pm
+      end do
+      p(1) = 1.d0
+      y(1) = 0.d0
+      gi = v(1) - e
+      y(2) = (1.d0 - hv * gi) * p(1)
+      do i = 2, m
+         y(3) = y(2) + ((y(2) - y(1)) + h2 * gi * p(i-1))
+         gi = v(i) - e
+         p(i) = y(3) / (1.0 - hv * gi)
+         if (abs(p(i)) > 1.d+34) then
+            i1 = i-1
+            pm = p(i1)
+            do j = 1, i1
+               p(j) = p(j) / pm
+            end do
+            y(1) = y(1) / pm
+            y(2) = y(2) / pm
+            y(3) = y(3) / pm
+            gi = v(i1) - e
+         else
+            y(1) = y(2)
+            y(2) = y(3)
+         end if
+      end do
+
+      pm = p(m)
+      if ( pm /= 0 ) then
+         yout = y(1) / pm
+         ym = y(3) / pm
+         do j = 1, m
+            p(j) = p(j) / pm
+         end do
+         df = 0.0
+         do j = 1, n
+            df = df - p(j) ** 2
+         end do
+         f = (-yout - yin + 2.d0 * ym) / h2 + (v(m) - e)
+         dold = de
+      end if
+      if ( abs(f) > 1.d+37 ) then
+         f = 9.99999d+29
+         df = -f
+         de = abs(0.0001d0*e)
+      else
+         de = -f / df
+      end if
+      eold = e
+      e = e + de
+      test = max((abs(dold)-abs(de)),test)
+      if ( test < 0.0 ) then
+         cycle
+      end if
+      if ( abs(e - eold) < eps ) then
+         exit
+      end if
+   end do
+   schrod = 0.0
+   kv = 0
+   nl = n - 2
+   do j = 3, nl
+      if ( p(j) < 0 ) then
+         if (p(j-1) < 0) then
+            cycle
+         else if ( p(j-1) == 0 ) then
+            if ( p(j+1) < 0) then
+               if ( p(j-2) > 0 ) then
+                  kv = kv + 1
+               end if
+            end if
+         else
+            if ( p(j+1) < 0) then
+               if ( p(j-2) >= 0 ) then
+                  kv = kv + 1
+               end if
+            end if
+         end if
+      else
+         if ( p(j-1) < 0) then
+            if ( p(j+1) >= 0) then
+               if ( p(j-2) < 0 ) then
+                  kv = kv + 1
+               end if
+            end if
+         end if
+      end if
+   end do
+   e2 = e
+
+   sn = sqrt(-h * df)
+   do j = 1, n
+      p(j) = p(j) / sn
+   end do
+end subroutine schr
 
 SUBROUTINE BESJOT (L,X,F,DF,R)
 ! C

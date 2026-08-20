@@ -564,7 +564,7 @@ c              isi=(-1.d0)**(iomdi)
       real*8 :: p(npunt),ff(npunt,2)
       real*8 :: rmis,rfin,ah,rg,ctet,xm,xz,r,rref,be,vasin,xl,eps,spl
       real*8 :: e0,e2,vmean,xnorm,r1,xxx,a,b,vmin,xz1
-      integer :: ielec,irmin,ir,j,iv,maxit,ifail,iold,ir1,itry,nchan,kv
+      integer :: ielec,irmin,ir,j,iv,maxit,ifail,iold,ir1,nchan,kv
       integer :: ierror,ie,je,jmax_write
 
 * temporal allocation of matrices
@@ -709,7 +709,7 @@ c              isi=(-1.d0)**(iomdi)
                      p(ir)=0.d0                     
                   enddo
 
-           call schr(e0,rmis,rfin,npunt,maxit,eps,e2,kv,itry,vv,p,npunt)
+           call schr(e0,rmis,rfin,npunt,maxit,eps,e2,kv,vv,p,npunt)
 
                   e2=e2/xz1
                   ediat(iv,j,ielec)=e2/conve*conve1
@@ -935,7 +935,7 @@ c            endif
       real*8 :: rrefA(nelecmax)
       real*8 :: rmis,rfin,ah,rg,ctet,xm,xz,r,rref,be,vasin,xl,eps,spl
       real*8 :: e0,e2,vmean,xnorm,r1,xxx,a,b,vmin,xz1
-      integer :: ielec,irmin,ir,j,iv,maxit,ifail,iold,ir1,itry,nchan,kv
+      integer :: ielec,irmin,ir,j,iv,maxit,ifail,iold,ir1,nchan,kv
       integer :: ierror,ie,je
 
 * temporal allocation of matrices
