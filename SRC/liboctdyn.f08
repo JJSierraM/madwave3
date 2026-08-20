@@ -513,182 +513,199 @@ subroutine schr(e0,rmin,rmax,n,maxit,eps,e2,kv,v,p,npunt)
    end do
 end subroutine schr
 
-SUBROUTINE BESJOT (L,X,F,DF,R)
-! C
-! C   THIS PROGRAM GENERATES THE STANDARD AND MODIFIED VERSIONS OF THE SPHERICAL
-! C   BESSEL-FUNCTIONS OF FIRST(BESJOT)- AND SECOND(BESSEN)-KIND RESPECTIVELY.
-! C   FOR DEFINITIONS COMPARE: 'NBS-H1NDBOOK OF MATHEMATICAL FUNCTIONS',
-! C   (ABRAMOWITZ+STEGUN,EDS./N.Y.:1964), SECTIONS 10.1.1 ON PAGE 437 FOR
-! C   STANDARD VERSIONS AND SS.10.2.2 + 10.2.3 ON P.443 FOR THE MODIFIED ONES.
-! C   L=INDEX(NATURAL NUMBERS INCLUDING ZERO), X=ARGUMENT(REAL,D.P.), F=OUTPUT.
-! C
-! C   THE SIGN OF THE ARGUMENT IS USED TO DETERMINE THE VERSIONS:
-! C   THE OUTCOMES F(=FIRST-KIND-FUNCTIONS) AND G(=SECOND-KIND-F.) MUST BE
-! C   DIVIDED (RESP. MULTIPLIED) BY THE L-TH POWER OF THE REDUCTION LOGFAC
-! C   TO GET THE MODIFIED VERSIONS, USE ARGUMENT WITH NEGATIVE SIGN }
-! C
-! C   BY FORMULAS 10.1.31 ON PAGE 439 LOC.CIT. AND 10.2.7 ON P.443 IBID.,
-! C   SOLUTIONS HAVE BEEN TESTED TO BE CORRECT TO TWELVE PLACES AT LEAST IN THE
-! C   RANGE COMBINING X=1...441 AND L=0...340 .
-! C
-! C   BESJOT IS DIVIDED INTO THREE PARTS, CORRESPONDING TO WETHER X > L, O
-! C   WHILE X < L, BEEING 0.5*X*X < 2*L OR 0.5*X*X > 2*L RESPECTIVELY .
-! C
-! C
-! C MODIF. POUR X PLUS GRAND QUE L DANS BESJOT  : R=1
-! C        QQ SOIT X DANS BESSEN : R=1
-! C   POUR EVITER LES OVERFLOWS OU UNDERFLOWS DANS LE PROG. APPELE POUR 50
-! C      VERSION JAN. 77
-! C
-! C  J.M.LAUNAY, MEUDON, FRANCE
-! C
-IMPLICIT DOUBLE PRECISION(A-H,O-Z)
-! C
-       F = 0.D0
-       R = 1.D0
-      IF(X)  51,50,52
- 50   IF(L == 0)  F=1.D0
-      DF = 0.D0
-      RETURN
-! C
- 51   SINIX = DSINH(-X)
-      COSIX = DCOSH(-X)
-       W = -1.D0
-      GOTO 53
- 52   PI = 6.283185307179586D0
-      XR = DMOD(X,PI)
-      SINIX = DSIN(XR)
-      COSIX = DCOS(XR)
-       W = +1.D0
- 53    Z = 1.D0 / DABS(X)
-       A = DBLE(L)
-       R = A * Z
-      IF(DABS(X)-A) 2,2,1
-   2  IF(0.5D0*X*X-2.D0*A) 4,4,3
-! C
-! C   FOR THE FOLLOWING VERSION SEE PAGE 439, SECTION 10.1.19 LOC.CIT., AN
-! C   SECTION 10.1.11 ON PAGE 438 IBIDEM}
-! C   FOR THE MODIFIED CASE LOOK UP SS.10.2.18 AND 10.2.13 ON PS.444 AND 4
-! C   THIS VERSION IS USED, IF X > L .
-! C
-  1   F0 = SINIX * Z
-      G0 =-COSIX * Z
-        R=1.D0
-      IF(L) 11,11,12
- 11    F = F0
-      DF =-G0 - F0*Z
-      RETURN
- 12   IF(L-1) 13,13,14
- 13    F = W * (F0-COSIX) * Z
-      DF = F0   - 2.0D0*F*Z
-      RETURN
- 14   F1 = W * (F0-COSIX) * Z
-      IF(L == 2)  GOTO 15
-       J = L-2
-      DO 10 I=1,J
-      F2 = W * (F1*DBLE(2*I+1)*Z - F0  )
-      F0 = F1
-   10 F1 = F2
-   15  F = W * (F1*DBLE(2*L-1)*Z - F0  )
-      DF = F1   - (L+1)*F*Z
-      RETURN
-! C
-! C   FOR THE FOLLOWING VERSION SEE PAGE 453, EXAMPLE 2 LOC.CIT.}
-! C   THIS VERSION IS USED, IF X < L AND 0.5*X*X > 2*L .
-! C
-  3    N = A + 25.D0 + DSQRT(A)
-      B0 = 0.D0
-      B1 = 1.D0
-      DO 20 J=1,N
-      B2 = W * (B1*DBLE(2*(N-J)+3)*Z - B0/R) / R
-      B0 = B1
-      IF(N-L-J) 22,21,22
- 21    F = B2
-      GOTO 20
- 22   IF(N-L+1-J)  20,23,20
- 23   DF = B2
-   20 B1 = B2
-      DF = W**(L-1) * (DF/B1) * SINIX*Z
-       F = W**L * (F/B1) * SINIX*Z
-      DF = DF*R - (L+1)*F*Z
-      RETURN
-! C
-! C   FOR THE FOLLOWING VERSION SEE P1GE 437, FORMULA 10.1.2  LOC.CIT.}
-! C   FOR THE MODIFIED CASE FORMULA 10.2.5 ON PAGE 443 IS VALID.
-! C   THIS VERSION IS USED, IF X < L AND 0.5*X*X < 2*L .
-! C
-! C
-  4    Y = -W * 0.5D0 * X * X
-      S0 = DBLE(2*L-1)
-      S1 = DBLE(2*L+1)
-      P0 = 1.D0
-      P1 = 1.D0
-      C0 = 1.D0
-      C1 = 1.D0
-      DO 30 I=1,15
-      S0 = S0 + 2.D0
-      S1 = S1 + 2.D0
-      P0 = Y*P0/(S0*DBLE(I))
-      P1 = Y*P1/(S1*DBLE(I))
-      C0 = C0 + P0
-   30 C1 = C1 + P1
-       Q = 1.D0
-      IF(L == 1)  GOTO 32
-       J = L - 1
-      DO 31 I=1,J
-   31  Q = Q * A/DBLE(2*I+1)
-       F = Q * A/DBLE(2*L+1) * C1
-      DF = Q*C0*R - DBLE(L+1)*F*Z
-      RETURN
-  32   F = C1 / 3.D0
-      DF = C0*R - 2.D0*F*Z
-      RETURN
-! C
-! C
-           ENTRY BESSEN(L,X,G,DG,R)
-! C
-! C   SPHERICAL BESSEL-(AND MODIFIED BESSEL-) FUNCTIONS OF THE SECOND KIND
-! C   THIS VERSION IS VALID FOR ALL INDICES AND ARGUMENTS.
-! C
-       G = 0.D0
-       A = DBLE(L)
-       R = 1.D0
-      IF(X) 61,60,62
- 60   WRITE(6,300)
-300   FORMAT(1H0,'*******  ARGUMENT OF SPHERICAL BESSEL-FUNCTION OF SECOND KIND SHOULD NOT BE ZERO }')
-      RETURN
- 61   SINIX = DSINH(-X)
-      COSIX = DCOSH(-X)
-       W = -1.D0
-      GOTO 63
- 62   PI = 6.283185307179586D0
-      XR = DMOD(X,PI)
-      SINIX = DSIN(XR)
-      COSIX = DCOS(XR)
-       W = +1.D0
- 63    Z = 1.D0 / DABS(X)
-      G0 =-W * COSIX * Z
-      F0 = W * SINIX * Z
-      IF(L) 41,41,42
- 41    G = G0
-      DG = W*F0 - G0*Z
-      RETURN
- 42        R=1.D0
-       IF(L-1) 43,43,44
- 43    G = W * (G0-SINIX)*Z
-      DG = G0   - 2.0D0*G*Z
-      RETURN
- 44   G1 = W * (G0-SINIX)*Z
-      IF(L == 2)  GOTO 45
-       J = L-2
-      DO 40 I=1,J
-      G2 = W * (G1*DBLE(2*I+1)*Z - G0  )
-      G0 = G1
-   40 G1 = G2
-  45   G = W * (G1*DBLE(2*L-1)*Z - G0  )
-      DG = G1   - DBLE(L+1)*G*Z
-      RETURN
-END
+subroutine besjot ( l, x, f, df, r )
+! c   this program generates the standard and modified versions of the spherical
+! c   bessel-functions of first(besjot)- and second(bessen)-kind respectively.
+! c   for definitions compare: 'nbs-h1ndbook of mathematical functions',
+! c   (abramowitz+stegun,eds./n.y.:1964), sections 10.1.1 on page 437 for
+! c   standard versions and ss.10.2.2 + 10.2.3 on p.443 for the modified ones.
+! c   l=index(natural numbers including zero), x=argument(real,d.p.), f=output.
+! c
+! c   the sign of the argument is used to determine the versions:
+! c   the outcomes f(=first-kind-functions) and g(=second-kind-f.) must be
+! c   divided (resp. multiplied) by the l-th power of the reduction logfac
+! c   to get the modified versions, use argument with negative sign }
+! c
+! c   by formulas 10.1.31 on page 439 loc.cit. and 10.2.7 on p.443 ibid.,
+! c   solutions have been tested to be correct to twelve places at least in the
+! c   range combining x=1...441 and l=0...340 .
+! c
+! c   besjot is divided into three parts, corresponding to wether x > l, o
+! c   while x < l, beeing 0.5*x*x < 2*l or 0.5*x*x > 2*l respectively .
+! c
+! c
+! c modif. pour x plus grand que l dans besjot  : r=1
+! c        qq soit x dans bessen : r=1
+! c   pour eviter les overflows ou underflows dans le prog. appele pour 50
+! c      version jan. 77
+! c
+! c  j.m.launay, meudon, france
+! c  updated to Fortran 2008: J. Sierra, IFF-CSIC, Spain
+   implicit none
+   integer, intent(in)  :: l
+   real*8, intent(in)   :: x
+   real*8, intent(inout):: f, df, r
+   
+   integer :: i, n, j
+   real*8 :: sinix, cosix, w, pi, xr, z, a, f0, g0, f1, f2, b0, b1, b2, y, s0, s1, p0, p1, c0, c1, q
+
+   f = 0.0
+   r = 1.0
+   if ( x == 0 ) then
+      if ( l == 0 ) then
+         f = 1.0
+      end if
+      df = 0.0
+      return
+   else if ( x < 0 ) then
+      sinix = sinh(-x)
+      cosix = cosh(-x)
+      w = -1.0
+   else 
+      pi = 6.283185307179586
+      xr = mod(x, pi)
+      sinix = sin(xr)
+      cosix = cos(xr)
+      w = 1.0
+   end if
+   z = 1.0 / abs(x)
+   a = dble(l)
+   r = a * Z
+
+   if ( abs(x) - a <= 0 ) then
+      if ( 0.5 * x * x - 2.0 * a > 0 ) then
+         n = a + 25.0 + sqrt(a)
+         b0 = 0.0
+         b1 = 1.0
+         do j = 1, n
+            b2 = w * (b1 * dble(2 * (n-j) + 3) * z - b0/r) / r
+            b0 = b1
+            if ( n-l-j == 0) then
+               f = b2
+            else if ( n-l+1-j == 0 ) then
+               df = b2
+            end if
+            b1 = b2
+         end do
+         df = w ** (l-1) * (df/b1) * sinix * z
+         f = w ** l * (f/b1) * sinix * z
+         df = df * r - (l+1) * f * z
+         return 
+      else
+         y = -w * 0.5 * x * x
+         s0 = dble(2*l-1)
+         s1 = dble(2*l+1)
+         p0 = 1.d0
+         p1 = 1.d0
+         c0 = 1.d0
+         c1 = 1.d0
+         do i = 1, 15
+            s0 = s0 + 2.d0
+            s1 = s1 + 2.d0
+            p0 = y * p0 / (s0 * dble(i))
+            p1 = y * p1 / (s1 * dble(i))
+            c0 = c0 + p0
+            c1 = c1 + p1
+         end do
+         q = 1.0
+         if ( l /= 1 ) then
+            j = l - 1
+            do i = 1, j
+               q = q * a / dble(2*i+1)
+            end do
+            f = q * a / dble(2*l+1) * c1
+            df = q * c0 * r - dble(l+1) * f * z
+            return 
+         end if
+            f = c1 / 3.d0
+            df = c0*r - 2.d0*f*z
+            return
+      end if
+   else
+      f0 = sinix * z
+      g0 =-cosix * z
+      r = 1.0
+      if ( l <= 0 ) then
+         f = F0
+         df = -g0 - f0 * z
+         return
+      else
+         if ( l-1 <= 0 ) then
+            f = w * (f0 - cosix) * z
+            df = f0 - 2.0 * f * z
+            return
+         else 
+            f1 = w * (f0 - cosix) * z
+            if ( l /= 2 ) then
+               j = l-2
+               do i = 1, j
+                  f2 = w * (f1 * dble(2*i+1) - f0)
+                  f0 = F1
+                  f1 = f2
+               end do
+            end if
+            f = w * (f1 * dble(2*l-1) * z - f0)
+            df = f1 - (l+1) * f * z
+            return 
+         end if
+      end if
+   end if
+end subroutine besjot
+
+subroutine bessen (l, x, g, dg, r)
+   implicit none
+   integer, intent(in) :: l
+   real*8, intent(in) :: x
+   real*8, intent(inout) :: g, r, dg
+
+   integer :: i, j
+   real*8 :: a, sinix, cosix, w, pi, xr, z, g0, f0, g1, g2
+
+   g = 0.0
+   a = dble(l)
+   r = 1.0
+   if ( x == 0 ) then
+      print *, "ARGUMENT OF SPHERICAL BESSEL-FUNCTION OF SECOND KIND SHOULD NOT BE ZERO"
+      return
+   else if ( x < 0 ) then
+      sinix = sinh(-x)
+      cosix = cosh(-x)
+      w = -1.0
+   else
+      pi = 6.283185307179586d0
+      xr = mod(x,pi)
+      sinix = sin(xr)
+      cosix = cos(xr)
+      w = +1.d0
+   end if
+   z = 1.0 / abs(x)
+   g0 =-w * cosix * z
+   f0 = w * sinix * z
+   if ( l <= 0 ) then
+      g = g0
+      dg = w * f0 - g0 * z
+      return
+   else
+      r = 1.0
+      if ( l-1 <= 1 ) then
+         g = w * (g0 - sinix) * z
+         dg = g0 - 2.0 * g * z
+         return 
+      else
+         g1 = w * (g0 - sinix) * z
+         if ( l /= 2 ) then
+            j = l-2
+            do i = 1, j
+               g2 = w * (g1 * dble(2 * i + 1) * z - g0  )
+               g0 = g1
+               g1 = g2
+            end do
+         end if
+         G = W * (G1*DBLE(2*L-1)*Z - G0  )
+         DG = G1   - DBLE(L+1)*G*Z
+      end if
+   end if
+end subroutine bessen
 ! *******************************  BESSEL  ***********************************
 
 SUBROUTINE BESPH2 (F,DF,G,DG,AA,ARG,KEY,IBUG)
