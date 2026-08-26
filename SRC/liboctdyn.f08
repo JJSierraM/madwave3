@@ -706,9 +706,10 @@ subroutine bessen (l, x, g, dg, r)
       end if
    end if
 end subroutine bessen
+
 ! *******************************  BESSEL  ***********************************
 
-SUBROUTINE BESPH2 (F,DF,G,DG,AA,ARG,KEY,IBUG)
+subroutine besph2 (f, df, g, dg, aa, arg, key, ibug)
 ! C#######################################################################
 ! C#    CALCULATES LINEARLY INDEPENDANT SOLUTIONS OF THE EQUATION        #
 ! C#       2    2        2                                               #
@@ -729,8 +730,8 @@ SUBROUTINE BESPH2 (F,DF,G,DG,AA,ARG,KEY,IBUG)
 ! C#           IF NEGATIVE THEN ARGUMENT Z IS IMAGINARY (Z = -I*ARG)     #
 ! C#           WHERE I = (-1)**0.5                                       #
 ! C#    F,G,DF,DG : REGULAR AND IRREGULAR FUNCTIONS AND THEIR DERIVATIVES#
-! C#    KEY  : .LT.0 TO SUPPRESS EXPONENTIAL FACTORS IN BESSIK          #
-! C#    IBUG :  >  0 TO PRINT THE OUTPUT                                #
+! C#    KEY  : .LT.0 TO SUPPRESS EXPONENTIAL FACTORS IN BESSIK           #
+! C#    IBUG :  >  0 TO PRINT THE OUTPUT                                 #
 ! C#---------------------------------------------------------------------#
 ! C#    HAVE BEEN TESTED ON WRONSKIAN RELATION W(F,G) = F*DG-DF*G = 1    #
 ! C#    FOR THE FOLLOWING VALUES OF THE ARGUMENT AND ORDERS :            #
@@ -741,75 +742,70 @@ SUBROUTINE BESPH2 (F,DF,G,DG,AA,ARG,KEY,IBUG)
 ! C#---------------------------------------------------------------------#
 ! C#    J.M.L. 08/1981 ; UPDATE : 12/1981                                #
 ! C#    J.M.LAUNAY, MEUDON, FRANCE                                       #
+! C#    J.J.SIERRA, MADRID, SPAIN, 2026 : updated to Fortran 2008        #
 ! C#######################################################################
-IMPLICIT DOUBLE PRECISION (A-H,O-Z)
-DIMENSION FF(2),DFF(2)
-      COMMON /TBESP2/ TIME(2,2)
-! C     DATA PI /3.1415 92653 58979 32384 D0/,TINY /1.D-10/
-      pi=dacos(-1.d0)
-      tiny=1.d-15
-! C
-      IF (AA .LT. -0.25D0) GO TO 10
-      FL = -0.5D0+DSQRT(AA+0.25D0)+TINY
-      L = FL
-      IF (DABS(FL-L) .LT. 2.D0*TINY) GO TO 20
- 10   PRINT 9010,AA
-      RETURN
-! C
- 20   X = DABS(ARG)
-      SK2 = -1.
-      IF (ARG  >  0.D0) GO TO 100
-      TWOPIM = 2.D0/PI
-      LP = L+1
-      LM = L-1
-      CALL BESSIK (L ,X,BI ,BK ,KEY)
-      CALL BESSIK (LM,X,BIM,BKM,KEY)
-      CALL BESSIK (LP,X,BIP,BKP,KEY)
-      F  = -BI*X
-      DF = -( (L*BIM+LP*BIP)/(L+LP)*X+BI)
-      G  =  BK*X*TWOPIM
-      DG =  (-(L*BKM+LP*BKP)/(L+LP)*X+BK)*TWOPIM
-      GO TO 1000
-! C
- 100  CALL BESJOT (L,X,BJ,DBJ,R)
-      CALL BESSEN (L,X,BN,DBN,RG)
-      SK2 = 1.
-      IF (L  ==  0)  GO TO 200
-      DO 210 I = 1,L
-         BJ = BJ/R
-         DBJ = DBJ/R
-         BN = BN*RG
-         DBN = DBN*RG
- 210  CONTINUE
- 200  F = X*BJ
-      G = X*BN
-      DF = X*DBJ+BJ
-      DG = X*DBN+BN
-! C
-! C --- TIME SURFACE INTEGRALS CALCULATION
-! C
- 1000 FF(1) = F
-      FF(2) = G
-      DFF(1) = DF
-      DFF(2) = DG
-      VV = AA/(X*X)-SK2
-! C     DO 1010 I = 1,2
-! C        DO 1011 J = 1,2
-! C           TIME(I,J) = -0.125*(FF(I)*DFF(J)+DFF(I)*FF(J)
-! C    &                         +2.*X*(FF(I)*VV*FF(J)-DFF(I)*DFF(J)) )
- 1011    CONTINUE
- 1010 CONTINUE
-      IF (IBUG .LE. 0) RETURN
-! C
- 2000 WM1 = F*DG-DF*G-1.D0
-! C      PRINT 9000,AA,ARG,F,DF,G,DG,WM1
-      RETURN
-! C
- 9000 FORMAT (' BESPH2 ',1F12.4,1F12.4,1P,4D20.12,1D9.1)
- 9010 FORMAT (' ****** BESPH2 ROUTINE; AA = ',F12.2,' IS NOT L*(L+1)' &
-             ,' WITH L INTEGER .GE. 0; REQUEST ABORTED ******')
-END
-SUBROUTINE BESSIK (L,X,BI,BK,KEY)
+
+   implicit none
+   real*8, intent(in) :: aa, arg
+   real*8, intent(inout) :: f, df, g, dg
+   integer, intent(in):: key, ibug
+
+   real*8 :: ff(2), dff(2), pi, x, sk2, twopim, bi, bk, bim, bkm, bip, bkp
+   real*8 :: bj, dbj, r, bn, dbn, rg, vv, wm1
+   integer :: l, lp, lm, i
+
+   pi = acos(-1.0)
+
+   if ( aa > -0.25 ) then
+      l = -0.5 + sqrt(aa + 0.25)
+   else
+      print "(' ****** BESPH2 ROUTINE; AA = ',F12.2,' IS NOT L*(L+1) WITH L INTEGER .GE. 0; REQUEST ABORTED ******')", aa
+   end if
+   
+   x = abs(arg)
+   sk2 = -1.0
+   if ( arg <= 0.0 ) then
+      twopim = 2.0/pi
+      lp = l+1
+      lm = l-1
+      call bessik(l,  x, bi,  bk,  key)
+      call bessik(lm, x, bim, bkm, key)
+      call bessik(lp, x, bip, bkp, key)
+      f  = -bi * x
+      df = -((l * bim + lp * bip) / (l + lp) * x + bi)
+      g  = bk * x * twopim
+      dg = (-(l * bkm + lp * bkp) / (l + lp) * x + bk) * twopim
+   else
+      call besjot(l, x, bj, dbj, r)
+      call bessen(l, x, bn, dbn, rg)
+      sk2 = 1.0
+      if ( l /= 0 ) then
+         do i = 1, l
+            bj  = bj / r
+            dbj = dbj / r
+            bn  = bn * rg
+            dbn = dbn * rg
+         end do
+      end if
+      f = x * bj
+      g = x * bn
+      df = x * dbj + bj
+      dg = x * dbn + bn
+   end if
+
+   ff(1) = f
+   ff(2) = g
+   dff(1) = df
+   dff(2) = dg
+   vv = aa / (x*x) - sk2
+
+   if ( ibug > 0 ) then
+      wm1 = f * dg - df * g - 1.0
+      print "(' BESPH2 ',1F12.4,1F12.4,1P,4D20.12,1D9.1)", aa, arg, f, df, g, dg, wm1
+   end if
+end subroutine besph2
+
+subroutine bessik (l, x, bi, bk, key)
 ! C#######################################################################
 ! C#    CALCULATION OF MODIFIED SPHERICAL BESSEL FUNCTIONS OF THE THIRD  #
 ! C#    KIND  :                                                          #
@@ -824,71 +820,82 @@ SUBROUTINE BESSIK (L,X,BI,BK,KEY)
 ! C#    KEY  =0: NORMAL, >0: MULTIPLIES BI BY EXP(X), BK BY EXP(-X)      #
 ! C#                     <0:     ''     BI BY EXP(-X), BK BY EXP(X)      #
 ! C#######################################################################
-      IMPLICIT DOUBLE PRECISION (A-H,O-Z)
-      COMMON /LGFAC/ FCT(50000)
-      DATA NTIME /0/
-      PI=DACOS(-1.D0)
-      FACTOR=DLOG(1.D-30)
-! C
-      NTIME  = NTIME+1
-      IF (NTIME  ==  1) CALL FACLG
-      BI = 0.D0
-      BK = 0.D0
-      IF (L .LT. 0) RETURN
-      FL = L
-      S2 = DLOG(2.D0)
-      SX = DLOG(X)
-      HOX = 0.5D0/X
-      CI = FL*SX
-      SHX2 = DLOG(0.5D0)+2.D0*SX
-      ALFA=0.D0
-      IF(KEY.LT.0)ALFA=X
-      IF(KEY > 0)ALFA=-X
-      BETA=X-ALFA
+   implicit none
+   real*8 fct
+   common /lgfac/fct(50000)
 
-! C  COMPUTATION OF BK
+   real*8, intent(in) :: x
+   real*8, intent(inout):: bi, bk 
+   integer, intent(in):: l, key
 
-      SUM = HOX*DEXP(-BETA)
-      IF (L  ==  0) GO TO 100
-         SHOX = DLOG(HOX)
-         SHOX1 = 0.D0
-         KMIN = 0
-         KMAX = L
-         SUM = 0.D0
-! C
-         DO 10 K = KMIN,KMAX
-            SHOX1 = SHOX+SHOX1
-            ST = FCT(L+K+1)-FCT(K+1)-FCT(L-K+1)+SHOX1
-            IF (ST .LT. -180.D0) GO TO 100
-            SUM = SUM+DEXP(ST-BETA)
- 10      CONTINUE
- 100  BK = PI*SUM
+   real*8 :: pi, factor, s2, sx, ci, shx2, alfa, beta, sum, hox, shox, shox1, st, ssum, term
+   integer :: kmin, kmax, k, lk
 
-! C  COMPUTATION OF BI
+   pi = acos(-1.0)
+   factor = log(1.d-30)
 
-      SUM = 0.D0
-      K = 0
-      LK = L
- 200  CONTINUE
-         ST = K*SHX2-FCT(K+1)-( FCT(2*LK+2)-LK*S2-FCT(LK+1) )
-         K = K+1
-         LK = L+K
-         IF(2*LK+2 > 5000)GO TO 9990
-         TERM=DEXP(ST-ALFA+CI)
-         SUM=SUM+TERM
-         SSUM=0.D0
-         IF(SUM > 0.D0)SSUM=DLOG(SUM)
-      IF(SSUM+ALFA.LT.FACTOR)GO TO 200
-      IF(SSUM == 0.D0)GO TO 200
-      IF((TERM/SUM) > 1.D-20)GO TO 200
+   call faclg
+   bi = 0.0
+   bk = 0.0
+   if ( l < 0 ) then
+      return
+   end if
+   s2 = log(2.0)
+   sx = log(x)
+   hox = 0.5 / x
+   ci = l * sx
+   shx2 = log(0.5) + 2.0 * sx
+   alfa = 0.0
+   if ( key < 0 ) then
+      alfa = x
+   else if ( key > 0) then
+      alfa = -x
+   end if
+   beta = x - alfa
 
-      BI=SUM
+   ! Computation of bk
+   sum = hox * exp(-beta)
+   if ( l /= 0 ) then
+      shox = log(hox)
+      shox1 = 0.0
+      kmin = 0
+      kmax = l
+      sum = 0.d0
+      do k = kmin, kmax
+         shox1 = shox + shox1
+         st = fct(l+k+1) - fct(k+1) - fct(l-k+1) + shox1
+         if ( st < -180.0 ) then
+            exit
+         end if
+         sum = sum + exp(st - beta)
+      end do
+   end if
+   bk = pi * sum 
 
-      RETURN
- 9990 CONTINUE
-      PRINT *,'***> ERROR IN BESSIK: MAX. VALUE OF FACTORIAL=',2*LK+2
-      STOP
-END
+   ! Computation of bi
+   sum = 0.0
+   ssum = 0.0
+   k = 0
+   lk = l
+
+   do while (ssum + alfa < factor .OR. ssum == 0.0 .OR. term/sum > 0)
+      st = k * shx2 - fct(k+1) - (fct(2*lk+2) - lk * s2 - fct(lk+1) )
+      k  = k + 1
+      lk = l + k
+      if ( 2 * lk + 2 > 5000 ) then
+         print *,'***> error in bessik: max. value of factorial = ', 2*lk+2
+         return
+      end if
+      term = exp(st - alfa + ci)
+      sum = sum + term
+      ssum = 0.0
+      if ( sum > 0.0 ) then
+         ssum = log(sum)
+      end if
+   end do
+   
+   bi = sum
+end subroutine bessik
 
 ! C***********************************************************************
 SUBROUTINE JORDAN(MU,LAMBDA,X,N,B)
@@ -949,24 +956,26 @@ DOUBLE PRECISION FUNCTION DLAGRA(X,Y,MIN,IP)
 40 CONTINUE
    RETURN
    END
-   SUBROUTINE FACLG
+
+subroutine faclg
 ! C#######################################################################
 ! C#    INITIALISATION OF LOGARITHMS OF FACTORIALS ARRAY                 #
 ! C#######################################################################
-   IMPLICIT DOUBLE PRECISION(A-H,O-Z)
-   COMMON /LGFAC/ FCT(50000)
-   DATA NTIMES /0/
-! C
-   NTIMES = NTIMES+1
-   IF (NTIMES  >  1) RETURN
-   FCT(1) = 0.D0
-   DO 10 I = 1,4999
-      AI = I
-      FCT(I+1) = FCT(I)+DLOG(AI)
-10   CONTINUE
-! C
-   RETURN
-END
+   implicit none
+   real*8  :: fct
+   integer, save :: ntimes = 0
+   integer :: i
+   common /lgfac/fct(50000)
+
+   if ( ntimes == 0 ) then
+      ntimes = ntimes + 1
+      fct(1) = 0.0
+      do i = 1, 49999
+         fct(i+1) = fct(i) + log(dble(i+1))
+      end do      
+   end if
+end subroutine faclg
+
 !----------------------------------------------------------------
 subroutine sinmom(box,npun,npundim,xmred,hbr,pr,p2r)
    implicit real*8(a-h,o-z)
