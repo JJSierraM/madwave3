@@ -897,39 +897,36 @@ subroutine bessik (l, x, bi, bk, key)
    bi = sum
 end subroutine bessik
 
-! C***********************************************************************
-SUBROUTINE JORDAN(MU,LAMBDA,X,N,B)
-! C***********************************************************************
-   IMPLICIT DOUBLE PRECISION(A-H,L-M,O-Z)
-! C
-   PARAMETER(NX2MAX=60000)
-! C
-   DIMENSION MU(N),LAMBDA(N),X(N),B(N)
-   DIMENSION PIV(NX2MAX)
-! C
-      IF(N > NX2MAX) GO TO 999
-! C
-! C
-! C     CALCUL DES PIVOTS
-      PIV(1)=2.D0
-      DO 10 I=2,N
-      PIV(I)=2.D0-LAMBDA(I)*MU(I-1)/PIV(I-1)
-   10 B(I)=B(I)-LAMBDA(I)/PIV(I-1)*B(I-1)
-! C
-      X(N)=B(N)/PIV(N)
-      I=N-1
-   20 X(I)=(B(I)-X(I+1)*MU(I))/PIV(I)
-      I=I-1
-      IF(I > 0) GOTO 20
-      RETURN
-! C
- 999  CONTINUE
-      PRINT 9000
-      PRINT 9999, NX2MAX, N
-      STOP
- 9000 FORMAT(//,2X,20('*'),' STOP IN JORDAN ',20('*'),/)
- 9999 FORMAT(2X,'DIMENSION PARAMETER NX2MAX TOO SMALL , ',I5,'REQUIRED')
-END
+subroutine jordan (mu, lambda, x, n, b)
+   implicit none
+   integer, intent(in) :: n
+   real*8, intent(in) :: mu(n), lambda(n)
+   real*8, intent(inout) :: b(n), x(n)
+
+   integer, parameter :: nx2max = 60000
+   integer :: i
+   real*8 :: piv(nx2max)
+   
+   if ( n > nx2max ) then
+      print "(//,2X,20('*'),' STOP IN JORDAN ',20('*'),/)"
+      print "(2X,'DIMENSION PARAMETER NX2MAX TOO SMALL , ',I5,'REQUIRED')", nx2max, n
+      stop
+   end if
+
+   piv(1) = 2.0
+   do i = 2, n
+      piv(i) = 2.d0 - lambda(i) * mu(i-1) / piv(i-1)
+      b(i) = b(i) - lambda(i) / piv(i-1) * b(i-1)
+   end do
+
+   x(n) = b(n) / piv(n)
+   i = n-1
+   do while (i > 0)
+      x(i) = (b(i) - x(i+1) * mu(i)) / piv(i)
+      i = i - 1
+   end do
+end subroutine jordan
+
 ! C***********************************************************************
 DOUBLE PRECISION FUNCTION DLAGRA(X,Y,MIN,IP)
 ! C***********************************************************************
