@@ -1017,10 +1017,10 @@ subroutine noptFFT(nin,nout,ntot)
    integer n2,n3,n5,n7,n11
    integer i2,i3,i5,i7,i11
 
-   nmax=10000
-   if(nin > nmax.or.ntot > nmax)then
-         write(6,*)' nin= ',nin,' , ntot= ',ntot,'  > nmax= ',nmax
-         write(6,*)'   in noptFFT of libdyn library'
+   nmax = 10000
+   if(nin > nmax .or. ntot > nmax)then
+         print *, ' nin= ',nin,' , ntot= ',ntot,'  > nmax= ',nmax
+         print *, '   in noptFFT of libdyn library'
          stop
    endif
 
@@ -1030,41 +1030,36 @@ subroutine noptFFT(nin,nout,ntot)
    nexp2=1
    do n2=0,100
       nexp2=nexp2*2
-      if(nexp2 > ntot)go to 2
+      if(nexp2 > ntot) exit
    enddo
-2    continue
    nexp2=n2
 
    nexp3=1
    do n3=0,100
       nexp3=nexp3*3
-      if(nexp3 > ntot)go to 3
+      if(nexp3 > ntot) exit
    enddo
-3    continue
    nexp3=n3
 
    nexp5=1
    do n5=0,100
       nexp5=nexp5*5
-      if(nexp5 > ntot)go to 5
+      if(nexp5 > ntot) exit
    enddo
-5    continue
    nexp5=n5
 
    nexp7=1
    do n7=0,100
       nexp7=nexp7*7
-      if(nexp7 > ntot)go to 7
+      if(nexp7 > ntot) exit
    enddo
-7    continue
    nexp7=n7
 
    nexp11=1
    do n11=0,100
       nexp11=nexp11*11
-      if(nexp11 > ntot)go to 11
+      if(nexp11 > ntot) exit
    enddo
-11   continue
    nexp11=n11
 
    i=1
@@ -1082,7 +1077,7 @@ subroutine noptFFT(nin,nout,ntot)
                   i2=2**n2
                   i=i2*i3*i5*i7*i11
                   idis=i-nin                     
-                  if(idis.ge.0.and.idis.lt.imin)then
+                  if(idis >= 0 .and. idis < imin) then
                         nout=i
                         imin=idis
                   endif
@@ -1092,10 +1087,9 @@ subroutine noptFFT(nin,nout,ntot)
       enddo
    enddo
 
-   if(nout > ntot)nout=ntot
+   if(nout > ntot) nout=ntot
+end subroutine noptFFT
 
-   return
-end
 !--------------------------------------------------------------------
 subroutine fftmom(box,npun,npundim,xmred,hbr,pr,p2r)
    implicit real*8(a-h,o-z)
