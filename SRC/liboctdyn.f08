@@ -1092,38 +1092,41 @@ end subroutine noptFFT
 
 !--------------------------------------------------------------------
 subroutine fftmom(box,npun,npundim,xmred,hbr,pr,p2r)
-   implicit real*8(a-h,o-z)
+   implicit none
+   real*8, intent(in) :: xmred, hbr
+   real*8, intent(inout):: box, pr(npundim),p2r(npundim)
+   integer, intent(in):: npun, npundim
 
-   dimension pr(npundim),p2r(npundim)
+   real*8 :: pi, dpi, hbrxm, ah, p
+   integer:: ir, iii
 
    if(npun > npundim)then
-      write(6,*)'  npun= ',npun, ' > npundim = ',npundim,' in fftmom'
+      print *, '  npun= ',npun, ' > npundim = ',npundim,' in fftmom'
       stop
-   endif   
+   end if   
       
    pi = dacos(-1.d0)
-   dpi = 2.d0*pi
-   hbrxm = 0.5d0*hbr*hbr/xmred
-   ah = (box)/dble(npun-1)
-   box = ah*dble(npun)
-   do ir=1,npundim
-      pr(ir)=0.d0
-      p2r(ir)=0.d0
-   enddo
+   dpi = 2.d0 * pi
+   hbrxm = 0.5d0 * hbr * hbr/xmred
+   ah = (box) / dble(npun-1)
+   box = ah * dble(npun)
+   do ir = 1, npundim
+      pr(ir) = 0.d0
+      p2r(ir) = 0.d0
+   end do
 
    do ir=1,npun
-      if(ir.le.(npun/2))then
-         iii=ir-1
+      if(ir <= (npun/2)) then
+         iii = ir-1
       else
-         iii=ir-npun-1
+         iii = ir-npun-1
       endif
       p = dpi*dble(iii)/box
       pr(ir) = p
       p2r(ir) = p*p*hbrxm 
-   enddo
+   end do
+end subroutine fftmom
 
-   return
-end
 ! *************************  tresj  **************************
 
 subroutine tresj(j1,j2,j3,m1,m2,m3,coef)
