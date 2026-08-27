@@ -927,32 +927,37 @@ subroutine jordan (mu, lambda, x, n, b)
    end do
 end subroutine jordan
 
-! C***********************************************************************
-DOUBLE PRECISION FUNCTION DLAGRA(X,Y,MIN,IP)
-! C***********************************************************************
-   IMPLICIT DOUBLE PRECISION(A-H,O-Z)
-   DIMENSION X(MIN),Y(MIN)
-   DLAGRA=0.D0
-   DO 10 I=1,MIN
-   IF(I == IP) GOTO 10
-   YP=Y(I)
-   DO 20 J=1,MIN
-      IF(J == IP) GOTO 20
-      IF(J == I) GOTO 20
-         YP=YP*(X(IP)-X(J))
-20 CONTINUE
-   DO 30 J=1,MIN
-      IF(J == I) GOTO 30
-         YP=YP/(X(I)-X(J))
-30 CONTINUE
-   DLAGRA=DLAGRA+YP
-10 CONTINUE
-   DO 40 I=1,MIN
-      IF(I == IP) GOTO 40
-         DLAGRA=DLAGRA+Y(IP)/(X(IP)-X(I))
-40 CONTINUE
-   RETURN
-   END
+real*8 function dlagra (x, y, min, ip)
+   implicit none
+   integer, intent(in) :: min, ip
+   real*8, intent(in) :: x(min), y(min)
+
+   integer :: i, j
+   real*8 :: yp
+
+   do i = 1, min
+      if ( i == ip ) then
+         cycle
+      end if
+      yp = y(i)
+      do j = 1, min
+         if ( j /= ip .AND. j /= i ) then
+            yp = yp * (x(ip) - x(j))
+         end if
+      end do
+      do j = 1, min
+         if ( j /= i ) then
+            yp = yp / (x(i) - x(j))
+         end if
+      end do
+      dlagra = dlagra + yp
+   end do
+   do i = 1, min
+      if ( i /= ip ) then
+         dlagra = dlagra + y(ip) / (x(ip) - x(i))
+      end if
+   end do
+end function dlagra
 
 subroutine faclg
 ! C#######################################################################
