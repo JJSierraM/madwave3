@@ -980,34 +980,37 @@ end subroutine faclg
 
 !----------------------------------------------------------------
 subroutine sinmom(box,npun,npundim,xmred,hbr,pr,p2r)
-   implicit real*8(a-h,o-z)
+   implicit none
+   real*8, intent(in) :: xmred, hbr
+   real*8, intent(inout):: box, pr(npundim),p2r(npundim)
+   integer, intent(in):: npun, npundim
 
-   dimension pr(npundim),p2r(npundim)
+   real*8 :: pi, dpi, hbrxm, ah, p
+   integer:: ir, iii
 
    if(npun > npundim)then
-      write(6,*)'  npun= ',npun, ' > npundim = ',npundim,' in fftmom'
+      print *, '  npun= ',npun, ' > npundim = ',npundim,' in fftmom'
       stop
    endif   
       
    pi = dacos(-1.d0)
-   dpi = 2.d0*pi
-   hbrxm = 0.5d0*hbr*hbr/xmred
-   ah = (box)/dble(npun-1)
-   box = 2.d0*(dble(npun)+1.d0)*ah
-   do ir=1,npundim
-      pr(ir)=0.d0
-      p2r(ir)=0.d0
+   dpi = 2.d0 * pi
+   hbrxm = 0.5d0 * hbr*hbr/xmred
+   ah = (box) / dble(npun-1)
+   box = 2.d0 * (dble(npun) + 1.d0) * ah
+   do ir = 1, npundim
+      pr(ir) = 0.d0
+      p2r(ir) = 0.d0
    enddo
 
-   do ir=1,npun
-      iii=ir
+   do ir = 1, npun
+      iii = ir
       p = dpi*dble(iii)/box
       pr(ir) = p
       p2r(ir) = p*p*hbrxm 
    enddo
+end subroutine sinmom
 
-   return
-end
 subroutine noptFFT(nin,nout,ntot)
    integer nin,nout,ntot,i,nmax,imin,idis
    integer nexp2,nexp3,nexp5,nexp7,nexp11
