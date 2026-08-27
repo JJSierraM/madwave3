@@ -169,19 +169,6 @@ subroutine gauleg(x, w, n)
    end do
 end subroutine gauleg
 
-! ********************  FACTORIAL  *********************************
-subroutine factorial
-   common/fct/fact(0:10000)
-   ! IMPLICIT real*8(A-H,O-Z)
-
-   fact(0)=0.d0
-   fact(1)=0.d0
-   n=10000
-   do i=2, n
-      fact(i)=fact(i-1)+dlog(dble(i))
-   end do 
-end
-
 ! *************************  tqli  ****************************
 
 subroutine tqli(d, e, n, np)
@@ -1128,32 +1115,36 @@ subroutine fftmom(box,npun,npundim,xmred,hbr,pr,p2r)
 end subroutine fftmom
 
 ! *************************  tresj  **************************
-
 subroutine tresj(j1,j2,j3,m1,m2,m3,coef)
-   implicit real*8 (a-h,o-z)
+   implicit none
+   integer, intent(in) :: j1, j2, j3, m1, m2, m3
+   real*8, intent(inout) :: coef
 
-   common/fct/fact(0:10000)
+   integer :: k, k1, k2, k3, k4, k5, kmin, kmax, isign
+   real*8 :: fct, trian, b, a
+   common /lgfac/fct(50000)
+   call faclg
 
-   coef=0.d0
+   coef = 0.d0
 
-   if(m1+m2+m3 == 0 .and. trian(j1,j2,j3) /= 0.d0)then
-         b=fact(j1+m1)+fact(j1-m1)+fact(j2+m2)+fact(j2-m2)+fact(j3+m3)+fact(j3-m3)
-         b=0.5d0*b
+   if(m1+m2+m3 == 0 .and. trian(j1,j2,j3) /= 0.d0) then
+         b = fct(j1+m1)+fct(j1-m1)+fct(j2+m2)+fct(j2-m2)+fct(j3+m3)+fct(j3-m3)
+         b = 0.5d0 * b
 
-         k1=j3-j2+m1
-         k2=j3-j1-m2
-         k3=j1+j2-j3
-         k4=j1-m1
-         k5=j2+m2
+         k1 = j3 - j2 + m1
+         k2 = j3 - j1 - m2
+         k3 = j1 + j2 - j3
+         k4 = j1 - m1 
+         k5 = j2 + m2 
 
-         kmin=max0( -k1 , -k2 , 0 )
+         kmin=max0( -k1 , -k2 ,  0 )
          kmax=min0(  k3 ,  k4 , k5 )
 
          isign=-1
-         if(mod(kmin,2) == 0)isign=1
+         if(mod(kmin,2) == 0) isign=1
 
          do k=kmin, kmax 
-            a=fact(k)+fact(k3-k)+fact(k4-k)+fact(k5-k)+fact(k1+k)+fact(k2+k)
+            a=fct(k)+fct(k3-k)+fct(k4-k)+fct(k5-k)+fct(k1+k)+fct(k2+k)
             coef=coef+isign*dexp(b-a)
             isign=isign*(-1) 
          end do
@@ -1162,7 +1153,7 @@ subroutine tresj(j1,j2,j3,m1,m2,m3,coef)
          if(mod(j1-j2-m3,2) == 0) isign=1
          coef = coef * trian(j1,j2,j3) * isign
    endif
-end
+end subroutine tresj
 ! *******************************  NPLEGM  ********************************
 
 subroutine nplegm(pm,lmax,m,y,ndim)
@@ -1408,20 +1399,19 @@ subroutine rfunread(ifile,npunr,nvini,nvmax,fread,nuno,fspl,npun,rmis,ah,f,x)
 end
 ! c********************  trian   ****************************
 
-function trian(j1,j2,j3)
+real*8 function trian(j1,j2,j3)
    implicit real*8 (a-h,o-z)
 
-   common/fct/fact(0:10000)
+   common /lgfac/fct(50000)
+   call faclg
 
-   trian=0.d0
+   trian = 0.d0
 
-   if(j3.ge.iabs(j1-j2).and.j3.le.(j1+j2))then
-      cc = fact(j1+j2-j3)+fact(j1-j2+j3)+fact(-j1+j2+j3)-fact(j1+j2+j3+1)
+   if(j3 >= iabs(j1-j2) .and. j3 <= (j1+j2)) then
+      cc = fct(j1+j2-j3) + fct(j1-j2+j3) + fct(-j1+j2+j3) - fct(j1+j2+j3+1)
       trian = dexp(cc/2.d0)
    endif
-
-   return
-end 
+end function trian
 
 ! ************************************************************************
 ! This function is never called in the code base
